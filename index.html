@@ -1,0 +1,3097 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>魔术方块小达人</title>
+<meta name="description" content="给小学生的魔术方块教学：7 步学会还原，观察力训练游戏，计时器，冲向 20 秒。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+KuaiLe&display=swap">
+<style>
+/* Layout: sticky top bar; reading column + sticky 3D cube player on wide screens; one column on phones.
+   Look: the cube itself — black body, rounded stickers, six sticker colors used only where they mean a color. */
+:root {
+  --bg: #F1F4F9;
+  --surface: #FFFFFF;
+  --surface-2: #E9EEF6;
+  --ink: #172031;
+  --ink-soft: #55617A;
+  --line: #D6DDE9;
+  --accent: #1B57D6;
+  --accent-deep: #123E9E;
+  --on-accent: #FFFFFF;
+  --accent-soft: #E1EAFE;
+  --note-soft: #FFF3C9;
+  --note-line: #F0D46A;
+  --good: #0F7A45;
+  --good-soft: #DBF4E6;
+  --warn: #A64B00;
+  --warn-soft: #FFE9D6;
+  --stage: radial-gradient(circle at 50% 42%, #FFFFFF 0%, #E8EDF6 70%);
+  --cube-body: #16181D;
+  --W: #FFFFFF; --Y: #FFD21F; --G: #14A44D; --B: #1F5FE0; --R: #E2302F; --O: #FF8A1C; --X: #A9B0BB;
+  --font-display: "ZCOOL KuaiLe", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-move: "Fredoka", "Noto Sans SC", system-ui, sans-serif;
+  --r-card: 18px;
+  --r-btn: 12px;
+  --shadow: 0 1px 0 rgba(23, 32, 49, .05), 0 8px 24px rgba(23, 32, 49, .07);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E121A; --surface: #171D28; --surface-2: #222A38; --ink: #ECF1F8; --ink-soft: #A3AEC3; --line: #2E3849;
+    --accent: #6E9BFF; --accent-deep: #3F6AD0; --on-accent: #0B1220; --accent-soft: #1B2949; --note-soft: #33290B; --note-line: #7A6418;
+    --good: #52CC8E; --good-soft: #143222; --warn: #FFA764; --warn-soft: #3A2614;
+    --stage: radial-gradient(circle at 50% 42%, #2A3446 0%, #171D28 72%);
+    --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E121A; --surface: #171D28; --surface-2: #222A38; --ink: #ECF1F8; --ink-soft: #A3AEC3; --line: #2E3849;
+  --accent: #6E9BFF; --accent-deep: #3F6AD0; --on-accent: #0B1220; --accent-soft: #1B2949; --note-soft: #33290B; --note-line: #7A6418;
+  --good: #52CC8E; --good-soft: #143222; --warn: #FFA764; --warn-soft: #3A2614;
+  --stage: radial-gradient(circle at 50% 42%, #2A3446 0%, #171D28 72%);
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.7; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+a { color: var(--accent); }
+h1, h2, h3, h4 { text-wrap: balance; line-height: 1.3; margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(30px, 5vw, 46px); letter-spacing: .01em; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(23px, 3.2vw, 30px); }
+h3 { font-size: 19px; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.muted { color: var(--ink-soft); }
+.small { font-size: 14px; }
+.eyebrow { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .08em; }
+
+/* ---------- top bar ---------- */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 18px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); flex: none; }
+.brand b { font-family: var(--font-display); font-weight: 400; font-size: 22px; white-space: nowrap; }
+.logo { display: grid; grid-template-columns: repeat(3, 9px); gap: 2px; padding: 3px; background: var(--cube-body); border-radius: 6px; }
+.logo i { width: 9px; height: 9px; border-radius: 2px; }
+.nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; flex: 1; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { flex: none; text-decoration: none; color: var(--ink-soft); font-weight: 700; font-size: 15px; padding: 7px 12px; border-radius: 10px; white-space: nowrap; }
+.nav a:hover { background: var(--surface-2); color: var(--ink); }
+.nav a.on { background: var(--accent-soft); color: var(--accent); }
+@media (max-width: 760px) {
+  .topbar-in { flex-wrap: wrap; gap: 6px 12px; padding-block: 8px 6px; }
+  .nav { flex-basis: 100%; margin-inline: -6px; }
+}
+
+/* ---------- page frame ---------- */
+#main { max-width: 1180px; margin: 0 auto; padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+.page-head { display: grid; gap: 10px; max-width: 760px; }
+.lead { font-size: 18px; color: var(--ink-soft); max-width: 62ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 18px; box-shadow: var(--shadow); display: grid; gap: 12px; min-width: 0; }
+.crumbs { display: flex; gap: 8px; font-size: 14px; color: var(--ink-soft); }
+.crumbs a { color: var(--ink-soft); }
+.sec-head { display: grid; gap: 6px; margin-bottom: 18px; }
+.sec-head p { color: var(--ink-soft); }
+.btnrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* ---------- buttons ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; cursor: pointer; text-decoration: none; background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 16px; padding: 11px 18px; border-radius: var(--r-btn); box-shadow: 0 3px 0 var(--accent-deep); transition: transform .08s, box-shadow .08s; line-height: 1.2; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--accent-deep); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.ghost { background: var(--surface); color: var(--ink); box-shadow: 0 3px 0 var(--line); border: 2px solid var(--line); padding: 9px 16px; }
+.btn.ghost:active { box-shadow: 0 1px 0 var(--line); }
+.btn.small { font-size: 14px; padding: 8px 13px; }
+.btn.ghost.small { padding: 6px 11px; }
+.icon-btn { width: 42px; height: 42px; display: inline-grid; place-items: center; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; cursor: pointer; color: var(--ink); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn.small { width: 30px; height: 30px; border-radius: 8px; font-size: 18px; line-height: 1; }
+.icon-btn:hover { background: var(--surface-2); }
+
+/* ---------- move chips ---------- */
+.mv { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 46px; padding: 4px 7px 3px; border: 2px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--ink); line-height: 1.1; cursor: pointer; }
+.mv b { font-family: var(--font-move); font-weight: 600; font-size: 19px; }
+.mv small { font-size: 11px; color: var(--ink-soft); margin-top: 2px; white-space: nowrap; }
+.mv.static { cursor: default; }
+.mv.done { opacity: .42; }
+.mv.now { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+.alg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.alg-chips.big .mv { min-width: 54px; padding: 6px 9px 5px; }
+.alg-chips.big .mv b { font-size: 23px; }
+.dot { display: inline-block; width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--cube-body); vertical-align: -3px; }
+.pair-dots { display: inline-flex; gap: 4px; }
+.pair-dots.big .dot { width: 28px; height: 28px; border-radius: 8px; }
+
+/* ---------- 3D cube ---------- */
+.cv { position: relative; width: 100%; height: 100%; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.cv:active { cursor: grabbing; }
+.cv-scene { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.cv-cube { position: relative; width: 1em; height: 1em; transform-style: preserve-3d; }
+.cubie { position: absolute; left: 0; top: 0; width: 1em; height: 1em; transform-style: preserve-3d; }
+.cf { position: absolute; left: 0; top: 0; width: 1em; height: 1em; background: #121418; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: .07em; }
+.st { position: absolute; inset: .065em; border-radius: .15em; background: var(--X); background-image: linear-gradient(150deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 55%); transition: opacity .2s; }
+.st[data-c="W"] { background-color: var(--W); } .st[data-c="Y"] { background-color: var(--Y); } .st[data-c="G"] { background-color: var(--G); }
+.st[data-c="B"] { background-color: var(--B); } .st[data-c="R"] { background-color: var(--R); } .st[data-c="O"] { background-color: var(--O); }
+.st[data-c="X"] { background-color: var(--X); }
+.st.dim { opacity: .14; }
+
+/* ---------- diagrams ---------- */
+.iso, .top, .net, .grid3 { display: block; width: 100%; height: auto; }
+.svg-cap { fill: var(--ink-soft); font-family: var(--font-body); }
+.iso-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+figure { margin: 0; }
+.dg { display: grid; gap: 8px; justify-items: center; }
+.dg .dg-pic { width: 100%; max-width: 230px; }
+.dg.wide .dg-pic { max-width: 280px; }
+.dg.small .dg-pic { max-width: 150px; }
+.dg figcaption { font-size: 14px; color: var(--ink-soft); text-align: center; max-width: 40ch; }
+.swatch-big { width: 120px; height: 120px; border-radius: 22px; border: 6px solid var(--cube-body); margin: 10px auto; }
+
+/* ---------- player ---------- */
+.pl { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow); padding: 14px; display: grid; gap: 12px; }
+.pl-head { display: grid; gap: 2px; min-height: 22px; }
+.pl-title { font-weight: 700; font-size: 17px; }
+.pl-sub { font-size: 14px; color: var(--ink-soft); }
+.pl-stage { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; margin: 0 auto; background: var(--stage); border-radius: 16px; }
+.pl-cube { position: absolute; inset: 4%; }
+.pl-viewbtn { position: absolute; top: 8px; right: 8px; }
+.pl-drag { position: absolute; left: 10px; bottom: 8px; display: flex; gap: 4px; align-items: center; font-size: 12px; color: var(--ink-soft); pointer-events: none; }
+.pl-drag svg { width: 16px; height: 16px; }
+.pl-next { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: center; background: var(--surface-2); border-radius: 14px; padding: 10px; }
+.nx-pic { width: 92px; }
+.nx-text { display: grid; gap: 2px; min-width: 0; }
+.nx-k { font-size: 12px; color: var(--ink-soft); font-weight: 700; }
+.nx-move { display: flex; align-items: baseline; gap: 10px; }
+.nx-move b { font-family: var(--font-move); font-size: 34px; font-weight: 600; line-height: 1; }
+.nx-move span { font-weight: 700; font-size: 18px; }
+.nx-text p { font-size: 14px; }
+.nx-seg { font-size: 12px; color: var(--accent); font-weight: 700; }
+.nx-done { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; color: var(--good); }
+.nx-done svg { width: 34px; height: 34px; flex: none; }
+.nx-done b { display: block; font-size: 17px; }
+.nx-done span { color: var(--ink-soft); font-size: 14px; }
+.nx-done span svg { width: 14px; height: 14px; vertical-align: -2px; }
+.pl-ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.pl-play { min-width: 112px; }
+.seg { display: inline-flex; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 7px 11px; cursor: pointer; font-weight: 700; font-size: 14px; color: var(--ink-soft); }
+.seg button.on { background: var(--accent-soft); color: var(--accent); }
+.pl-chips { max-height: 230px; overflow: auto; display: grid; gap: 8px; padding-right: 4px; }
+.pl-stagehead { font-weight: 700; font-size: 14px; color: var(--ink); padding-top: 6px; border-top: 1px solid var(--line); }
+.pl-stagehead:first-child { border-top: 0; padding-top: 0; }
+.pl-seg { display: grid; gap: 4px; }
+.pl-segname { font-size: 12px; color: var(--ink-soft); font-weight: 700; }
+.pl-segchips { display: flex; flex-wrap: wrap; gap: 5px; }
+.pl-segchips .mv { min-width: 42px; }
+.pl-segchips .mv b { font-size: 16px; }
+
+/* ---------- lesson layout ---------- */
+.lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); grid-template-areas: "head head" "main side"; gap: 28px 40px; align-items: start; }
+.lesson-head { grid-area: head; display: grid; gap: 8px; max-width: 780px; }
+.lesson-main { grid-area: main; min-width: 0; display: grid; gap: 22px; }
+.lesson-side { grid-area: side; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); min-width: 0; }
+.goal { font-size: 18px; color: var(--ink-soft); }
+.goal b { color: var(--ink); }
+.dock { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 112px); }
+.dock.inline { margin-block: 4px; }
+@media (max-width: 900px) {
+  .lesson { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "side" "main"; }
+  .lesson-side { position: static; }
+  .pl-stage { max-width: 300px; }
+}
+.prose > h2 { margin-top: 14px; }
+.prose > h3 { margin-top: 4px; }
+.prose p { max-width: 66ch; }
+.prose.narrow { max-width: 760px; display: grid; gap: 16px; }
+.steps { list-style: none; counter-reset: s; padding: 0; margin: 0; display: grid; gap: 10px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; }
+.steps li::before { content: counter(s); font-family: var(--font-move); font-weight: 600; font-size: 17px; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--cube-body); color: var(--Y); margin-top: 1px; }
+.checks { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.tip { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; background: var(--accent-soft); border-radius: 16px; padding: 14px 16px; align-items: start; }
+.tip-ic { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: var(--surface); color: var(--accent); }
+.tip-ic svg { width: 22px; height: 22px; }
+.tip b { display: block; font-size: 16px; }
+.tip.rule { background: var(--note-soft); }
+.tip.rule .tip-ic { color: var(--warn); }
+.pairs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pair { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 4px; }
+.pair b { font-size: 18px; }
+.pair p { font-size: 14px; color: var(--ink-soft); }
+.pair .dot { width: 26px; height: 26px; border-radius: 8px; }
+@media (max-width: 640px) { .pairs { grid-template-columns: minmax(0, 1fr); } }
+.cases { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.case { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; align-content: start; }
+.case .dg-pic { max-width: 170px; }
+.case-body { display: grid; gap: 6px; justify-items: start; }
+.case-body h4 { font-size: 17px; }
+.case-body p { font-size: 15px; color: var(--ink-soft); }
+.algcard { background: var(--surface); border: 2px solid var(--cube-body); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.algcard-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.algcard-name { font-family: var(--font-display); font-size: 22px; }
+.algcard p { font-size: 15px; color: var(--ink-soft); }
+.chant { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.chant span { font-size: 12px; font-weight: 700; background: var(--cube-body); color: var(--Y); padding: 3px 9px; border-radius: 99px; }
+.chant b { font-size: 17px; letter-spacing: .06em; }
+.practice { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 2px dashed var(--line); border-radius: 16px; padding: 14px 16px; }
+.practice > div { flex: 1 1 260px; display: grid; gap: 2px; }
+.practice p { font-size: 14px; color: var(--ink-soft); }
+.facenames { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.facenames div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 6px; display: grid; justify-items: center; }
+.facenames b { font-family: var(--font-move); font-size: 30px; font-weight: 600; line-height: 1.1; }
+.facenames small { color: var(--ink-soft); font-size: 12px; }
+@media (max-width: 560px) { .facenames { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.movegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.movecard { display: grid; gap: 4px; justify-items: center; background: var(--surface); border: 2px solid var(--line); border-radius: 16px; padding: 10px 8px 8px; cursor: pointer; }
+.movecard:hover { border-color: var(--accent); }
+.mc-pic { width: 100%; max-width: 104px; }
+.mc-txt { display: flex; gap: 8px; align-items: baseline; }
+.mc-txt b { font-family: var(--font-move); font-weight: 600; font-size: 24px; }
+.mc-txt small { font-weight: 700; color: var(--ink-soft); }
+.mnemo { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.mnemo div { display: flex; gap: 6px; }
+.shapes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .shapes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.finale { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 20px; align-items: center; background: var(--surface); border: 2px solid var(--cube-body); border-radius: 20px; padding: 20px; }
+.finale > div { display: grid; gap: 10px; }
+@media (max-width: 560px) { .finale { grid-template-columns: minmax(0, 1fr); } .finale-pic { max-width: 140px; } }
+.lesson-end { display: grid; gap: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
+.lesson-end > .btn { justify-self: start; }
+.pn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pn-a { display: grid; gap: 2px; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.pn-a small { color: var(--ink-soft); }
+.pn-a.nx { text-align: right; }
+
+/* ---------- quiz ---------- */
+.sq { display: grid; gap: 12px; }
+.spotquiz, .guessgame { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+.sq-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+.sq-score { display: inline-flex; gap: 4px; align-items: center; color: var(--warn); }
+.sq-score svg { width: 16px; height: 16px; }
+.sq-body { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sq-fig { width: 100%; }
+.sq-right { display: grid; gap: 12px; min-width: 0; }
+.sq-q { font-weight: 700; font-size: 18px; }
+@media (max-width: 600px) { .sq-body { grid-template-columns: minmax(0, 1fr); } .sq-fig { max-width: 220px; margin: 0 auto; } }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opts.four .opt { min-width: 64px; font-family: var(--font-move); font-size: 20px; }
+.opt { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 14px; font-weight: 700; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; color: var(--ink); }
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); color: var(--good); }
+.opt.wrong { border-style: dashed; border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.mvopt { flex-direction: column; gap: 0; min-width: 64px; line-height: 1.15; }
+.mvopt b { font-family: var(--font-move); font-size: 22px; font-weight: 600; }
+.mvopt small { font-size: 12px; color: inherit; opacity: .8; }
+.fb { display: grid; gap: 10px; justify-items: start; }
+.fb:empty { display: none; }
+.fb-box { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 12px; width: 100%; }
+.fb-box svg { width: 26px; height: 26px; }
+.fb-box.ok { background: var(--good-soft); color: var(--good); border: 2px solid var(--good); }
+.fb-box.no { background: var(--warn-soft); color: var(--warn); border: 2px dashed var(--warn); }
+.fb-box p { color: var(--ink); font-size: 15px; }
+.sq-end { display: grid; gap: 12px; justify-items: center; text-align: center; padding: 10px; }
+.sq-big { font-family: var(--font-move); font-weight: 600; font-size: 52px; line-height: 1; }
+.gg { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 18px; align-items: center; }
+.gg-cube { aspect-ratio: 1; width: 100%; max-width: 240px; background: var(--stage); border-radius: 16px; }
+.gg-side { display: grid; gap: 12px; justify-items: start; }
+.gg-side .sq-top { width: 100%; }
+@media (max-width: 600px) { .gg { grid-template-columns: minmax(0, 1fr); } .gg-cube { margin: 0 auto; max-width: 220px; } }
+.after { display: flex; gap: 10px; align-items: center; }
+.after svg { width: 120px; }
+
+/* ---------- home ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 30px; align-items: center; }
+.hero-text { display: grid; gap: 16px; }
+.hero h1 { font-size: clamp(34px, 5.6vw, 56px); }
+.hero-cube { display: grid; gap: 8px; justify-items: center; }
+#heroCube { width: min(100%, 380px); aspect-ratio: 1; background: var(--stage); border-radius: 24px; }
+.hero-cap { font-size: 14px; color: var(--ink-soft); text-align: center; min-height: 2.6em; max-width: 380px; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); } #heroCube { width: min(100%, 300px); } }
+.progress { display: flex; gap: 12px; align-items: center; font-size: 14px; color: var(--ink-soft); }
+.progress-bar { width: 160px; height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.progress-bar i { display: block; height: 100%; background: var(--good); border-radius: 99px; }
+.map { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.lv { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px; box-shadow: var(--shadow); align-items: center; transition: transform .12s; }
+.lv:hover { transform: translateY(-2px); border-color: var(--accent); }
+.lv.done { border-color: var(--good); }
+.lv-pic { width: 96px; }
+.lv-txt { display: grid; gap: 2px; min-width: 0; }
+.lv-k { font-size: 13px; font-weight: 700; color: var(--accent); display: flex; gap: 6px; align-items: center; }
+.lv-star { color: var(--warn); display: inline-flex; }
+.lv-star svg { width: 16px; height: 16px; }
+.lv b { font-size: 19px; }
+.lv small { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+.lv-min { font-size: 12px; color: var(--ink-soft); }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 760px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.feature { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-items: center; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; box-shadow: var(--shadow); }
+.feature:hover { border-color: var(--accent); }
+.feature b { font-family: var(--font-display); font-weight: 400; font-size: 24px; }
+.feature p { font-size: 15px; color: var(--ink-soft); }
+.road { list-style: none; padding: 0; margin: 0 0 16px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.road li { display: grid; gap: 2px; align-content: start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; position: relative; }
+.road-t { font-family: var(--font-move); font-weight: 600; font-size: 20px; color: var(--accent); }
+.road b { font-size: 16px; }
+.road small { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+@media (max-width: 900px) { .road { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.road.vertical { grid-template-columns: minmax(0, 1fr); }
+.road.vertical li { grid-template-columns: 90px 110px minmax(0, 1fr); align-items: baseline; }
+@media (max-width: 560px) { .road.vertical li { grid-template-columns: 80px minmax(0, 1fr); } .road.vertical li small { grid-column: 2; } }
+
+/* ---------- camp & games ---------- */
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.game { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 16px; align-items: center; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; box-shadow: var(--shadow); }
+.game:hover { border-color: var(--accent); }
+.game-pic { width: 104px; display: grid; place-items: center; }
+.game-txt { display: grid; gap: 3px; }
+.game-txt b { font-family: var(--font-display); font-weight: 400; font-size: 24px; }
+.game-txt small { color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
+.game-best { font-size: 13px; font-weight: 700; color: var(--good); }
+.game-area { display: grid; gap: 16px; }
+.gbox { max-width: 860px; }
+.gstart { display: grid; gap: 14px; justify-items: start; }
+.lvbtns { display: grid; gap: 8px; }
+.clock { font-family: var(--font-move); color: var(--ink); }
+.find { grid-template-columns: minmax(0, 1fr) minmax(0, 320px); align-items: start; max-width: 900px; }
+.find-cube { aspect-ratio: 1; width: 100%; max-width: 460px; background: var(--stage); border-radius: 16px; }
+.find-side { display: grid; gap: 10px; align-content: start; justify-items: start; }
+.find-side .sq-top { width: 100%; }
+@media (max-width: 700px) { .find { grid-template-columns: minmax(0, 1fr); } }
+.target { display: flex; align-items: center; gap: 8px; font-size: 20px; }
+.target .dot { width: 26px; height: 26px; border-radius: 8px; }
+.flash { display: grid; gap: 14px; }
+.flash-show { display: grid; gap: 10px; justify-items: center; }
+.flash-show .grid3 { width: min(100%, 260px); }
+.bar { width: min(100%, 260px); height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar i { display: block; width: 100%; height: 100%; background: var(--accent); }
+.flash-paint { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
+.flash-paint > div:last-child { display: grid; gap: 12px; justify-items: start; }
+@media (max-width: 560px) { .flash-paint { grid-template-columns: minmax(0, 1fr); } .paintgrid { justify-self: center; } }
+.flash-cmp { display: flex; gap: 20px; flex-wrap: wrap; }
+.flash-cmp figure { width: 150px; display: grid; gap: 4px; justify-items: center; font-size: 14px; color: var(--ink-soft); }
+.paintgrid { display: grid; grid-template-columns: repeat(3, 64px); gap: 6px; padding: 8px; background: var(--cube-body); border-radius: 16px; width: max-content; }
+.paintgrid.big { grid-template-columns: repeat(3, 70px); }
+.pcell { width: 64px; height: 64px; border-radius: 11px; border: 2px dashed #6B7385; background: #2A2F3A; cursor: pointer; }
+.paintgrid.big .pcell { width: 70px; height: 70px; }
+.pcell.filled { border: 0; }
+.pcell.lock { cursor: default; box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .25); }
+.palette { display: flex; flex-wrap: wrap; gap: 8px; }
+.pal { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 7px 12px 7px 8px; font-weight: 700; cursor: pointer; color: var(--ink); }
+.pal::before { content: ""; width: 24px; height: 24px; border-radius: 7px; background: var(--c); border: 2px solid var(--cube-body); }
+.pal small { font-family: var(--font-move); font-size: 12px; color: var(--ink-soft); }
+.pal.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ---------- follow ---------- */
+.tabs { display: inline-flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 14px; justify-self: start; flex-wrap: wrap; }
+.tab { border: 0; background: transparent; padding: 8px 14px; border-radius: 10px; font-weight: 700; cursor: pointer; color: var(--ink-soft); }
+.tab.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.follow-scr { gap: 18px; }
+.scr-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 18px; align-items: center; }
+.scr-wrap > div:first-child { display: grid; gap: 12px; }
+@media (max-width: 760px) { .scr-wrap { grid-template-columns: minmax(0, 1fr); } }
+.follow-scr > .btn { justify-self: start; }
+.stagecard { gap: 8px; }
+.stage-dots { display: flex; gap: 6px; }
+.stage-dots i { width: 22px; height: 8px; border-radius: 99px; background: var(--surface-2); }
+.stage-dots i.past { background: var(--good); }
+.stage-dots i.now { background: var(--accent); }
+.inp { gap: 16px; }
+.inp-steps { display: flex; gap: 6px; flex-wrap: wrap; }
+.istep { border: 2px solid var(--line); background: var(--surface); border-radius: 10px; padding: 5px 12px; font-weight: 700; cursor: pointer; color: var(--ink-soft); }
+.istep.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.inp-body { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: start; }
+.inp-body > div { display: grid; gap: 12px; justify-items: start; }
+@media (max-width: 700px) { .inp-body { grid-template-columns: minmax(0, 1fr); } }
+.inp-net { max-width: 520px; display: grid; gap: 6px; }
+
+/* ---------- timer ---------- */
+.timer-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.timer-grid > .card:nth-child(5), .timer-grid > .card:nth-child(6) { grid-column: 1 / -1; }
+@media (max-width: 800px) { .timer-grid { grid-template-columns: minmax(0, 1fr); } }
+.scr-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.scr-pic { width: 130px; }
+.timer-pad { min-height: 250px; border: 3px solid var(--line); background: var(--surface); border-radius: 22px; display: grid; place-items: center; align-content: center; gap: 8px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; box-shadow: var(--shadow); }
+.tp-time { font-family: var(--font-move); font-weight: 600; font-size: clamp(56px, 9vw, 92px); line-height: 1; font-variant-numeric: tabular-nums; }
+.tp-hint { font-size: 15px; color: var(--ink-soft); padding-inline: 12px; text-align: center; }
+.timer-pad[data-s="hold"], .timer-pad[data-s="hold-i"] { border-color: var(--warn); }
+.timer-pad[data-s="hold"] .tp-time, .timer-pad[data-s="hold-i"] .tp-time { color: var(--warn); }
+.timer-pad[data-s="ready"], .timer-pad[data-s="ready-i"] { border-color: var(--good); background: var(--good-soft); }
+.timer-pad[data-s="ready"] .tp-time, .timer-pad[data-s="ready-i"] .tp-time { color: var(--good); }
+.timer-pad[data-s="inspect"] { border-color: var(--accent); background: var(--accent-soft); }
+.timer-pad[data-s="running"] { border-color: var(--ink); }
+.switch { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.switch input { width: 20px; height: 20px; accent-color: var(--accent); }
+.stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stat { display: grid; gap: 0; }
+.stat small { color: var(--ink-soft); font-size: 13px; }
+.stat b { font-family: var(--font-move); font-weight: 600; font-size: 30px; font-variant-numeric: tabular-nums; }
+.stat-note { grid-column: 1 / -1; }
+.badges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.badge { display: flex; gap: 6px; align-items: center; padding: 8px 10px; border-radius: 12px; border: 2px dashed var(--line); color: var(--ink-soft); font-weight: 700; font-size: 14px; }
+.badge svg { width: 18px; height: 18px; opacity: .35; flex: none; }
+.badge.got { border: 2px solid var(--note-line); background: var(--note-soft); color: var(--ink); }
+.badge.got svg { opacity: 1; color: var(--warn); }
+.tlist { display: grid; gap: 4px; max-height: 320px; overflow: auto; }
+.trow { display: grid; grid-template-columns: 44px 84px minmax(0, 1fr) 30px; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.trow b { font-family: var(--font-move); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tn { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.ts { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-move); }
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .goal-t { paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.chart .grid, .barfig .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis, .barfig .axis { fill: var(--ink-soft); font-size: 12px; font-family: var(--font-body); }
+.chart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .pt { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.chart .goal { stroke: var(--ink-soft); stroke-dasharray: 4 4; opacity: .7; }
+.chart .goal-t { fill: var(--ink-soft); font-size: 11px; font-family: var(--font-body); }
+.chart .cross { stroke: var(--ink-soft); stroke-width: 1; }
+.tip-pop { position: absolute; transform: translate(-50%, -120%); background: var(--ink); color: var(--bg); padding: 4px 9px; border-radius: 8px; font-size: 13px; display: grid; pointer-events: none; white-space: nowrap; }
+.tip-pop b { font-family: var(--font-move); }
+
+/* ---------- speed ---------- */
+.barpair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .barpair { grid-template-columns: minmax(0, 1fr); } }
+.barfig { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 6px; }
+.barfig figcaption { font-weight: 700; }
+.barfig svg { width: 100%; height: auto; display: block; }
+.barfig .bar { fill: var(--accent); }
+.barfig .val { fill: var(--ink); font-size: 12px; font-weight: 700; font-family: var(--font-body); }
+.barfig .lab { fill: var(--ink); font-size: 13px; }
+.finger { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.finger div { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 10px; }
+.finger p { font-size: 14px; }
+.cross-ch { gap: 10px; }
+.cc-left { display: grid; gap: 10px; }
+.cc-net { max-width: 460px; }
+.xcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.xcase { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+.xcase > div { display: grid; gap: 6px; justify-items: start; }
+.xcase .dg-pic { max-width: 110px; }
+.xcase .mv { min-width: 38px; padding: 2px 5px; }
+.xcase .mv b { font-size: 15px; }
+.xcase .mv small { font-size: 10px; }
+.plan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.plan div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 2px; align-content: start; }
+.plan p { font-size: 14px; color: var(--ink-soft); }
+@media (max-width: 800px) { .plan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- cheat cards ---------- */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.ccard { display: grid; gap: 10px; align-content: start; text-decoration: none; color: var(--ink); background: var(--surface); border: 2px solid var(--cube-body); border-radius: 20px; padding: 16px; }
+.ccard:hover { border-color: var(--accent); }
+.ccard-top { display: flex; gap: 10px; align-items: baseline; }
+.ccard-top b { font-family: var(--font-display); font-weight: 400; font-size: 24px; }
+.ccard-pic { width: 140px; justify-self: center; }
+.ccard-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: start; font-size: 15px; }
+.ccard-lab { display: inline-flex; gap: 3px; align-items: center; font-weight: 700; color: var(--accent); font-size: 14px; }
+.ccard-lab svg { width: 16px; height: 16px; }
+.ccard .mv { min-width: 38px; padding: 2px 5px; }
+.ccard .mv b { font-size: 15px; }
+.ccard .mv small { font-size: 10px; }
+
+#toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 30px); opacity: 0; background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 12px; font-weight: 700; transition: .25s; z-index: 50; pointer-events: none; max-width: calc(100% - 32px); }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+  <a class="brand" href="#home" aria-label="魔术方块小达人 首页"><span class="logo" aria-hidden="true"><i style="background:#FFD21F"></i><i style="background:#E2302F"></i><i style="background:#14A44D"></i><i style="background:#1F5FE0"></i><i style="background:#FFD21F"></i><i style="background:#FF8A1C"></i><i style="background:#FFFFFF"></i><i style="background:#14A44D"></i><i style="background:#FFD21F"></i></span><b>魔术方块小达人</b></a>
+  <nav class="nav" aria-label="主要页面"></nav>
+</div></header>
+<main id="main"></main>
+<script>
+/* ===== Cube engine: sticker model, moves, masks, beginner solver ===== */
+const Cube = (() => {
+  const FACES = ['U', 'R', 'F', 'D', 'L', 'B'];
+  const FD = {
+    U: { n: [0, 1, 0], r: [1, 0, 0], d: [0, 0, 1] },
+    R: { n: [1, 0, 0], r: [0, 0, -1], d: [0, -1, 0] },
+    F: { n: [0, 0, 1], r: [1, 0, 0], d: [0, -1, 0] },
+    D: { n: [0, -1, 0], r: [1, 0, 0], d: [0, 0, -1] },
+    L: { n: [-1, 0, 0], r: [0, 0, 1], d: [0, -1, 0] },
+    B: { n: [0, 0, -1], r: [-1, 0, 0], d: [0, -1, 0] },
+  };
+  const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+  const key = (p, n) => p.join(',') + '|' + n.join(',');
+  const SLOTS = [];
+  const IDX = {};
+  FACES.forEach((f, fi) => {
+    const { n, r, d } = FD[f];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      const p = add(add(n, r, j - 1), d, i - 1);
+      const s = { f, fi, i, j, p, n, k: SLOTS.length };
+      IDX[key(p, n)] = SLOTS.length;
+      SLOTS.push(s);
+    }
+  });
+  const slotAt = (p, n) => IDX[key(p, n)];
+
+  // rotate integer vector 90deg about axis (0=x,1=y,2=z); sign +1 = +90 (right-hand)
+  function rot([x, y, z], axis, sign) {
+    if (axis === 0) return sign > 0 ? [x, -z, y] : [x, z, -y];
+    if (axis === 1) return sign > 0 ? [z, y, -x] : [-z, y, x];
+    return sign > 0 ? [-y, x, z] : [y, -x, z];
+  }
+  const MD = {
+    R: [0, -1, p => p[0] === 1], L: [0, 1, p => p[0] === -1], M: [0, 1, p => p[0] === 0],
+    x: [0, -1, () => true], r: [0, -1, p => p[0] >= 0], l: [0, 1, p => p[0] <= 0],
+    U: [1, -1, p => p[1] === 1], D: [1, 1, p => p[1] === -1], E: [1, 1, p => p[1] === 0],
+    y: [1, -1, () => true], u: [1, -1, p => p[1] >= 0], d: [1, 1, p => p[1] <= 0],
+    F: [2, -1, p => p[2] === 1], B: [2, 1, p => p[2] === -1], S: [2, -1, p => p[2] === 0],
+    z: [2, -1, () => true], f: [2, -1, p => p[2] >= 0], b: [2, 1, p => p[2] <= 0],
+  };
+  const BASE = {};
+  for (const m in MD) {
+    const [axis, sign, layer] = MD[m];
+    const perm = new Array(54);
+    SLOTS.forEach((s, k) => {
+      perm[k] = layer(s.p) ? slotAt(rot(s.p, axis, sign), rot(s.n, axis, sign)) : k;
+    });
+    BASE[m] = perm;
+  }
+  function compose(a, b) { // apply a then b
+    const out = new Array(54);
+    for (let k = 0; k < 54; k++) out[k] = b[a[k]];
+    return out;
+  }
+  const PERM = {};
+  for (const m in BASE) {
+    const p1 = BASE[m], p2 = compose(p1, p1), p3 = compose(p2, p1);
+    PERM[m] = p1; PERM[m + '2'] = p2; PERM[m + "'"] = p3;
+  }
+  function norm(t) {
+    t = t.replace(/’|′/g, "'").trim();
+    let m = t.match(/^([URFDLBMESxyzurfdlb])(w?)(2?)('?)$/);
+    if (!m) return null;
+    let base = m[1];
+    if (m[2] === 'w') base = base.toLowerCase();
+    let suf = m[3] ? '2' : (m[4] ? "'" : '');
+    return base + suf;
+  }
+  function parse(alg) {
+    if (Array.isArray(alg)) return alg.filter(Boolean);
+    return alg.replace(/[()\[\]]/g, ' ').split(/\s+/).filter(Boolean).map(norm).filter(Boolean);
+  }
+  function invMove(m) {
+    if (m.endsWith('2')) return m;
+    if (m.endsWith("'")) return m.slice(0, -1);
+    return m + "'";
+  }
+  function invert(alg) { return parse(alg).reverse().map(invMove); }
+  function apply(state, alg) {
+    let s = state.slice();
+    for (const m of parse(alg)) {
+      const p = PERM[m];
+      const o = new Array(54);
+      for (let k = 0; k < 54; k++) o[p[k]] = s[k];
+      s = o;
+    }
+    return s;
+  }
+  const SCHEME = { U: 'Y', D: 'W', F: 'G', B: 'B', R: 'O', L: 'R' };
+  function solved() { return SLOTS.map(s => SCHEME[s.f]); }
+  function isSolved(s) {
+    for (let f = 0; f < 6; f++) for (let k = 1; k < 9; k++) if (s[f * 9 + k] !== s[f * 9]) return false;
+    return true;
+  }
+  // masks: keep(p) gets the HOME position of each sticker's piece in solved state
+  function mask(keep, base) {
+    const s = base || solved();
+    return s.map((c, k) => {
+      const r = keep(SLOTS[k].p, SLOTS[k].n, c);
+      return r === true ? c : (r === false ? 'X' : r);
+    });
+  }
+  const isCenter = p => p.filter(v => v !== 0).length === 1;
+  const isEdge = p => p.filter(v => v !== 0).length === 2;
+  const isCorner = p => p.filter(v => v !== 0).length === 3;
+  const MASKS = {
+    all: () => true,
+    centers: p => isCenter(p),
+    cross: p => isCenter(p) || (p[1] === -1 && isEdge(p)),
+    f1: p => isCenter(p) || p[1] === -1,
+    f2l: p => isCenter(p) || p[1] <= 0,
+    oll: (p, n, c) => (p[1] <= 0 || isCenter(p)) ? true : (c === 'Y' ? 'Y' : 'X'),
+    ollEdges: (p, n, c) => (p[1] <= 0 || isCenter(p)) ? true : (isEdge(p) && c === 'Y' ? 'Y' : 'X'),
+    llEdges: (p) => p[1] <= 0 || isCenter(p) || isEdge(p),
+    pieceType: t => p => (t === 'center' ? isCenter(p) : t === 'edge' ? isEdge(p) : isCorner(p)),
+  };
+
+  // ---------- piece helpers ----------
+  const POS = []; // all 26 cubie positions with their slots
+  (function () {
+    const m = {};
+    SLOTS.forEach(s => { const k = s.p.join(','); (m[k] = m[k] || { p: s.p, slots: [] }).slots.push(s.k); });
+    for (const k in m) POS.push(m[k]);
+  })();
+  const posKey = p => p.join(',');
+  const POSMAP = {}; POS.forEach(o => POSMAP[posKey(o.p)] = o);
+  const center = (s, f) => s[FACES.indexOf(f) * 9 + 4];
+  const colorAt = (s, p, n) => s[slotAt(p, n)];
+  const N = { U: [0, 1, 0], D: [0, -1, 0], R: [1, 0, 0], L: [-1, 0, 0], F: [0, 0, 1], B: [0, 0, -1] };
+  function findPiece(s, colors) { // colors: array; returns {p, map:{faceName:color}}
+    const want = colors.slice().sort().join('');
+    for (const o of POS) {
+      if (o.slots.length !== colors.length) continue;
+      const cs = o.slots.map(k => s[k]);
+      if (cs.slice().sort().join('') === want) return o;
+    }
+    return null;
+  }
+  const faceOfNormal = n => FACES.find(f => N[f].join() === n.join());
+
+  // ---------- beginner solver ----------
+  const FACE_MOVES = ['U', "U'", 'U2', 'R', "R'", 'R2', 'F', "F'", 'F2', 'L', "L'", 'L2', 'B', "B'", 'B2', 'D', "D'", 'D2'];
+  const U_EDGES = [[0, 1, 1], [1, 1, 0], [0, 1, -1], [-1, 1, 0]]; // UF UR UB UL
+  function petals(s) {
+    let c = 0;
+    for (const p of U_EDGES) if (colorAt(s, p, N.U) === 'W') c++;
+    return c;
+  }
+  function daisy(s) {
+    const out = [];
+    let guard = 0;
+    while (petals(s) < 4 && guard++ < 8) {
+      const base = petals(s);
+      let found = null;
+      for (let depth = 1; depth <= 6 && !found; depth++) {
+        const path = [];
+        const dfs = (st, d, last) => {
+          if (d === 0) return petals(st) > base;
+          for (const m of FACE_MOVES) {
+            if (last && m[0] === last[0]) continue;
+            if (last && ((last[0] === 'D' && m[0] === 'U') || (last[0] === 'L' && m[0] === 'R') || (last[0] === 'B' && m[0] === 'F'))) continue;
+            path.push(m);
+            if (dfs(apply(st, [m]), d - 1, m)) return true;
+            path.pop();
+          }
+          return false;
+        };
+        if (dfs(s, depth, null)) found = path.slice();
+      }
+      if (!found) break;
+      out.push(...found);
+      s = apply(s, found);
+    }
+    return { moves: out, state: s };
+  }
+  const SIDES = ['F', 'R', 'B', 'L'];
+  const U_OF = { F: [0, 1, 1], R: [1, 1, 0], B: [0, 1, -1], L: [-1, 1, 0] };
+  const UTURN = ['', 'U', 'U2', "U'"];
+  const YTURN = ['', 'y', 'y2', "y'"];
+  function crossFromDaisy(s) {
+    const out = [];
+    let remaining = SIDES.slice();
+    while (remaining.length) {
+      let best = null;
+      for (const X of remaining) for (let k = 0; k < 4; k++) {
+        const t = k ? apply(s, [UTURN[k]]) : s;
+        const p = U_OF[X];
+        if (colorAt(t, p, N.U) === 'W' && colorAt(t, p, N[X]) === center(t, X)) {
+          const cost = k === 0 ? 0 : (k === 2 ? 2 : 1);
+          if (!best || cost < best.cost) best = { X, k, cost };
+        }
+      }
+      if (!best) break;
+      const seq = (best.k ? [UTURN[best.k]] : []).concat([best.X + '2']);
+      out.push(...seq);
+      s = apply(s, seq);
+      remaining = remaining.filter(x => x !== best.X);
+    }
+    return { moves: out, state: s };
+  }
+  // white corners at D layer
+  const D_CORNERS = [[1, -1, 1], [-1, -1, 1], [-1, -1, -1], [1, -1, -1]];
+  const U_CORNERS = [[1, 1, 1], [-1, 1, 1], [-1, 1, -1], [1, 1, -1]]; // UFR UFL UBL UBR
+  function cornerSolved(s, p) {
+    const o = POSMAP[posKey(p)];
+    return o.slots.every(k => s[k] === s[SLOTS[k].fi * 9 + 4]);
+  }
+  function edgeSolved(s, p) { return cornerSolved(s, p); }
+  const SEXY = ['R', 'U', "R'", "U'"];
+  function corners(s) {
+    const out = [];
+    let guard = 0;
+    while (guard++ < 12) {
+      if (D_CORNERS.every(p => cornerSolved(s, p))) break;
+      // candidates in U layer
+      let best = null;
+      for (const p of U_CORNERS) {
+        const o = POSMAP[posKey(p)];
+        const cols = o.slots.map(k => s[k]);
+        if (!cols.includes('W')) continue;
+        const others = cols.filter(c => c !== 'W');
+        for (let m = 0; m < 4; m++) {
+          const t = m ? apply(s, [YTURN[m]]) : s;
+          const fr = [center(t, 'F'), center(t, 'R')].sort().join('');
+          if (fr !== others.slice().sort().join('')) continue;
+          for (let k = 0; k < 4; k++) {
+            const t2 = k ? apply(t, [UTURN[k]]) : t;
+            const piece = findPiece(t2, cols);
+            if (posKey(piece.p) === '1,1,1') {
+              const cost = (m ? 1 : 0) + (k ? 1 : 0);
+              if (!best || cost < best.cost) best = { m, k, cost };
+            }
+          }
+        }
+      }
+      if (best) {
+        const seq = [];
+        if (best.m) seq.push(YTURN[best.m]);
+        if (best.k) seq.push(UTURN[best.k]);
+        s = apply(s, seq); out.push(...seq);
+        for (let i = 0; i < 6 && !cornerSolved(s, [1, -1, 1]); i++) { s = apply(s, SEXY); out.push(...SEXY); }
+        continue;
+      }
+      // pop a wrong D corner
+      let popped = false;
+      for (let m = 0; m < 4 && !popped; m++) {
+        const t = m ? apply(s, [YTURN[m]]) : s;
+        const o = POSMAP['1,-1,1'];
+        if (o.slots.some(k => t[k] === 'W') && !cornerSolved(t, [1, -1, 1])) {
+          // if it is the correct corner just twisted, sexy until solved
+          const cols = o.slots.map(k => t[k]).filter(c => c !== 'W').sort().join('');
+          const fr = [center(t, 'F'), center(t, 'R')].sort().join('');
+          const seq = m ? [YTURN[m]] : [];
+          s = apply(s, seq); out.push(...seq);
+          if (cols === fr) {
+            for (let i = 0; i < 6 && !cornerSolved(s, [1, -1, 1]); i++) { s = apply(s, SEXY); out.push(...SEXY); }
+          } else { s = apply(s, SEXY); out.push(...SEXY); }
+          popped = true;
+        }
+      }
+      if (!popped) break;
+    }
+    return { moves: out, state: s };
+  }
+  const RIGHT_ALG = parse("U R U' R' U' F' U F");
+  const LEFT_ALG = parse("U' L' U L U F U' F'");
+  const MID_EDGES = [[1, 0, 1], [-1, 0, 1], [-1, 0, -1], [1, 0, -1]];
+  function secondLayer(s) {
+    const out = [];
+    let guard = 0;
+    while (guard++ < 12) {
+      if (MID_EDGES.every(p => edgeSolved(s, p))) break;
+      let best = null;
+      for (const p of U_EDGES) {
+        const o = POSMAP[posKey(p)];
+        const cols = o.slots.map(k => s[k]);
+        if (cols.includes('Y')) continue;
+        const sideSlot = o.slots.find(k => SLOTS[k].f !== 'U');
+        const side = s[sideSlot], top = s[o.slots.find(k => SLOTS[k].f === 'U')];
+        for (let k = 0; k < 4; k++) {
+          const t = k ? apply(s, [UTURN[k]]) : s;
+          // edge position after U^k
+          const piece = findPiece(t, cols);
+          const sideNow = piece.slots.find(q => SLOTS[q].f !== 'U');
+          const face = SLOTS[sideNow].f;
+          if (center(t, face) !== side) continue;
+          const m = { F: 0, R: 1, B: 2, L: 3 }[face];
+          const cost = (k ? 1 : 0) + (m ? 1 : 0);
+          if (!best || cost < best.cost) best = { k, m, top, cost };
+        }
+      }
+      if (best) {
+        const seq = [];
+        if (best.k) seq.push(UTURN[best.k]);
+        if (best.m) seq.push(YTURN[best.m]);
+        s = apply(s, seq);
+        const alg = best.top === center(s, 'R') ? RIGHT_ALG : LEFT_ALG;
+        s = apply(s, alg); out.push(...seq, ...alg);
+        continue;
+      }
+      // pop out a wrong middle edge
+      let popped = false;
+      for (let m = 0; m < 4 && !popped; m++) {
+        const t = m ? apply(s, [YTURN[m]]) : s;
+        if (!edgeSolved(t, [1, 0, 1])) {
+          const seq = (m ? [YTURN[m]] : []).concat(RIGHT_ALG);
+          s = apply(s, seq); out.push(...seq); popped = true;
+        }
+      }
+      if (!popped) break;
+    }
+    return { moves: out, state: s };
+  }
+  const FRURUF = parse("F R U R' U' F'");
+  function yellowEdgesUp(s) { return U_EDGES.map(p => colorAt(s, p, N.U) === 'Y'); } // UF UR UB UL
+  function crossShape(s) {
+    const e = yellowEdgesUp(s); const c = e.filter(Boolean).length;
+    if (c === 4) return 'cross';
+    if (c === 0) return 'dot';
+    if (c === 2) return (e[0] && e[2]) || (e[1] && e[3]) ? 'line' : 'L';
+    return 'other';
+  }
+  function yellowCross(s) {
+    const out = [];
+    let guard = 0;
+    while (guard++ < 6) {
+      const sh = crossShape(s);
+      if (sh === 'cross') break;
+      let k = 0;
+      if (sh === 'L') { for (k = 0; k < 4; k++) { const e = yellowEdgesUp(k ? apply(s, [UTURN[k]]) : s); if (e[2] && e[3]) break; } }
+      if (sh === 'line') { for (k = 0; k < 4; k++) { const e = yellowEdgesUp(k ? apply(s, [UTURN[k]]) : s); if (e[1] && e[3]) break; } }
+      const seq = (k ? [UTURN[k]] : []).concat(FRURUF);
+      s = apply(s, seq); out.push(...seq);
+    }
+    return { moves: out, state: s };
+  }
+  const SUNE = parse("R U R' U R U2 R'");
+  const yellowCornersUp = s => U_CORNERS.map(p => colorAt(s, p, N.U) === 'Y'); // UFR UFL UBL UBR
+  function yellowFace(s, rule2) {
+    const out = [];
+    let guard = 0;
+    while (guard++ < 8) {
+      const c = yellowCornersUp(s).filter(Boolean).length;
+      if (c === 4) break;
+      let k;
+      for (k = 0; k < 4; k++) {
+        const t = k ? apply(s, [UTURN[k]]) : s;
+        if (c === 1 && colorAt(t, [-1, 1, 1], N.U) === 'Y') break;
+        if (c !== 1) {
+          const face = (c === 2 && rule2 === 'F') ? N.F : N.L;
+          if (colorAt(t, [-1, 1, 1], face) === 'Y') break;
+        }
+      }
+      if (k === 4) k = 0;
+      const seq = (k ? [UTURN[k]] : []).concat(SUNE);
+      s = apply(s, seq); out.push(...seq);
+    }
+    return { moves: out, state: s };
+  }
+  const APERM = parse("R' F R' B2 R F' R' B2 R2");
+  const UPERM = parse("R U' R U R U R U' R' U' R2");
+  // headlights on side X: the two U corners touching X have same color on X face
+  function headlights(s) {
+    const res = {};
+    for (const X of SIDES) {
+      const n = N[X];
+      const cs = U_CORNERS.filter(p => p[0] * n[0] + p[2] * n[2] === 1).map(p => colorAt(s, p, n));
+      res[X] = cs[0] === cs[1];
+    }
+    return res;
+  }
+  function cornersAligned(s) { return U_CORNERS.every(p => cornerSolved(s, p)); }
+  function cornerPerm(s, apermSide) {
+    const out = [];
+    let guard = 0;
+    while (guard++ < 6) {
+      const h = headlights(s);
+      const cnt = SIDES.filter(x => h[x]).length;
+      if (cnt === 4) break;
+      let k = 0;
+      if (cnt === 1) {
+        for (k = 0; k < 4; k++) { const t = k ? apply(s, [UTURN[k]]) : s; if (headlights(t)[apermSide]) break; }
+      }
+      const seq = (k ? [UTURN[k]] : []).concat(APERM);
+      s = apply(s, seq); out.push(...seq);
+    }
+    // align corners
+    for (let k = 0; k < 4; k++) {
+      const t = k ? apply(s, [UTURN[k]]) : s;
+      if (cornersAligned(t)) { if (k) { out.push(UTURN[k]); s = t; } break; }
+    }
+    return { moves: out, state: s };
+  }
+  function sideSolved(s, X) {
+    const n = N[X];
+    const ps = [[0, 1, 0], ...U_CORNERS].filter(p => p[0] * n[0] + p[2] * n[2] === 1 || (p[0] === 0 && p[2] === 0 && false));
+    const e = add([0, 1, 0], n);
+    const cols = U_CORNERS.filter(p => p[0] * n[0] + p[2] * n[2] === 1).map(p => colorAt(s, p, n)).concat([colorAt(s, e, n)]);
+    return cols.every(c => c === center(s, X));
+  }
+  function edgePerm(s, upermSide) {
+    const out = [];
+    let guard = 0;
+    while (guard++ < 6) {
+      if (isSolved(s)) break;
+      const solvedSides = SIDES.filter(X => sideSolved(s, X));
+      let m = 0;
+      if (solvedSides.length >= 1) {
+        for (m = 0; m < 4; m++) { const t = m ? apply(s, [YTURN[m]]) : s; if (sideSolved(t, upermSide)) break; }
+        if (m === 4) m = 0;
+      }
+      const seq = (m ? [YTURN[m]] : []).concat(UPERM);
+      s = apply(s, seq); out.push(...seq);
+    }
+    return { moves: out, state: s };
+  }
+  const STAGES = [
+    { id: 'daisy', name: '小雏菊', fn: s => daisy(s) },
+    { id: 'cross', name: '白十字', fn: s => crossFromDaisy(s) },
+    { id: 'corners', name: '白色角块', fn: s => corners(s) },
+    { id: 'second', name: '第二层', fn: s => secondLayer(s) },
+    { id: 'ycross', name: '黄十字', fn: s => yellowCross(s) },
+    { id: 'yface', name: '黄色面', fn: s => yellowFace(s, CFG.rule2) },
+    { id: 'cperm', name: '车灯角块', fn: s => cornerPerm(s, CFG.apermSide) },
+    { id: 'eperm', name: '棱块换位', fn: s => edgePerm(s, CFG.upermSide) },
+  ];
+  const CFG = { rule2: 'L', apermSide: 'B', upermSide: 'B' };
+  function solveBeginner(s, upto = 8) {
+    const parts = [];
+    for (let i = 0; i < upto; i++) {
+      const r = STAGES[i].fn(s);
+      parts.push({ id: STAGES[i].id, name: STAGES[i].name, moves: r.moves });
+      s = r.state;
+    }
+    return { parts, state: s };
+  }
+  function randomScramble(len = 20, rnd = Math.random) {
+    const faces = ['U', 'D', 'R', 'L', 'F', 'B'];
+    const axis = { U: 0, D: 0, R: 1, L: 1, F: 2, B: 2 };
+    const out = [];
+    let last = null, last2 = null;
+    while (out.length < len) {
+      const f = faces[Math.floor(rnd() * 6)];
+      if (f === last) continue;
+      if (last && axis[f] === axis[last] && last2 && axis[last2] === axis[f]) continue;
+      out.push(f + ['', "'", '2'][Math.floor(rnd() * 3)]);
+      last2 = last; last = f;
+    }
+    return out;
+  }
+  // simplify consecutive same-face moves (for display)
+  function simplify(moves) {
+    const out = [];
+    const amt = m => m.endsWith('2') ? 2 : m.endsWith("'") ? 3 : 1;
+    for (const m of moves) {
+      const last = out[out.length - 1];
+      if (last && last[0] === m[0]) {
+        const a = (amt(last) + amt(m)) % 4;
+        out.pop();
+        if (a) out.push(m[0] + ['', '', '2', "'"][a]);
+      } else out.push(m);
+    }
+    return out;
+  }
+
+  // ---------- cross optimal solver (white edges on D) ----------
+  let crossTable = null;
+  const EDGE_POS = POS.filter(o => o.slots.length === 2);
+  function edgeStateIndex(s, targets) { // targets: list of color pairs; returns code
+    // code per edge: posIndex*2 + flip  (flip=0 if white sticker on its 'primary' face)
+    return targets.map(cols => {
+      const o = EDGE_POS.findIndex(e => e.slots.map(k => s[k]).sort().join('') === cols);
+      const e = EDGE_POS[o];
+      const wk = e.slots.find(k => s[k] === 'W');
+      const prim = e.slots[0];
+      return o * 2 + (wk === prim ? 0 : 1);
+    });
+  }
+  function buildCross() {
+    if (crossTable) return crossTable;
+    // edge move table from sticker perms
+    const eTab = {};
+    for (const m of FACE_MOVES) {
+      const perm = PERM[m];
+      eTab[m] = new Int8Array(24);
+      EDGE_POS.forEach((e, i) => {
+        for (let f = 0; f < 2; f++) {
+          const prim = e.slots[0], other = e.slots[1];
+          const wk = f === 0 ? prim : other; // white sticker slot
+          const nk = perm[wk];
+          const ni = EDGE_POS.findIndex(x => x.slots.includes(nk));
+          const nf = EDGE_POS[ni].slots[0] === nk ? 0 : 1;
+          eTab[m][i * 2 + f] = ni * 2 + nf;
+        }
+      });
+    }
+    const S = solved();
+    const targets = EDGE_POS.filter(e => e.slots.some(k => S[k] === 'W')).map(e => e.slots.map(k => S[k]).sort().join(''));
+    const enc = a => ((a[0] * 24 + a[1]) * 24 + a[2]) * 24 + a[3];
+    const dist = new Uint8Array(24 ** 4).fill(255);
+    const start = edgeStateIndex(S, targets);
+    dist[enc(start)] = 0;
+    let frontier = [start];
+    let d = 0;
+    while (frontier.length) {
+      const next = [];
+      for (const st of frontier) for (const m of FACE_MOVES) {
+        const t = st.map(v => eTab[m][v]);
+        const c = enc(t);
+        if (dist[c] === 255) { dist[c] = d + 1; next.push(t); }
+      }
+      frontier = next; d++;
+    }
+    crossTable = { eTab, targets, enc, dist };
+    return crossTable;
+  }
+  function solveCross(s) {
+    const T = buildCross();
+    let st = edgeStateIndex(s, T.targets);
+    const out = [];
+    let d = T.dist[T.enc(st)];
+    while (d > 0) {
+      for (const m of FACE_MOVES) {
+        if (out.length && out[out.length - 1][0] === m[0]) continue;
+        const t = st.map(v => T.eTab[m][v]);
+        if (T.dist[T.enc(t)] === d - 1) { out.push(m); st = t; d--; break; }
+      }
+    }
+    return out;
+  }
+
+  return {
+    FACES, FD, SLOTS, IDX, slotAt, PERM, MD, parse, invert, invMove, apply, solved, isSolved, mask, MASKS,
+    POS, POSMAP, center, colorAt, findPiece, N, SCHEME, isCenter, isEdge, isCorner,
+    daisy, crossFromDaisy, corners, secondLayer, yellowCross, crossShape, yellowFace, cornerPerm, edgePerm,
+    headlights, sideSolved, solveBeginner, STAGES, CFG, randomScramble, simplify, solveCross, buildCross,
+    petals, yellowCornersUp, yellowEdgesUp, cornerSolved, U_CORNERS, U_EDGES, D_CORNERS, MID_EDGES, rot,
+  };
+})();
+/* ===== UI: colors, labels, SVG diagrams, 3D cube view, step player ===== */
+const HEX = { W: '#FFFFFF', Y: '#FFD21F', G: '#14A44D', B: '#1F5FE0', R: '#E2302F', O: '#FF8A1C', X: '#A9B0BB' };
+const CN = { W: '白', Y: '黄', G: '绿', B: '蓝', R: '红', O: '橙', X: '灰' };
+const BODY = '#16181D';
+const MOVE_SHORT = {
+  R: '右上', "R'": '右下', R2: '右两下', L: '左下', "L'": '左上', L2: '左两下',
+  U: '顶左', "U'": '顶右', U2: '顶两下', D: '底右', "D'": '底左', D2: '底两下',
+  F: '前顺', "F'": '前逆', F2: '前两下', B: '后顺', "B'": '后逆', B2: '后两下',
+  M: '中下', "M'": '中上', M2: '中两下', E: '中右', "E'": '中左', S: '中顺', "S'": '中逆',
+  x: '整体上翻', "x'": '整体下翻', x2: '整体翻半圈', y: '整体左转', "y'": '整体右转', y2: '整体转半圈',
+  z: '整体右倒', "z'": '整体左倒', z2: '整体倒过来',
+  r: '两层右上', "r'": '两层右下', l: '两层左下', "l'": '两层左上', f: '两层前顺', "f'": '两层前逆',
+  u: '两层顶左', "u'": '两层顶右', d: '两层底右', "d'": '两层底左',
+};
+const MOVE_LONG = {
+  R: '右边一层往上转', "R'": '右边一层往下转', R2: '右边一层转两下（半圈）',
+  L: '左边一层往下转', "L'": '左边一层往上转', L2: '左边一层转两下（半圈）',
+  U: '顶层往左转', "U'": '顶层往右转', U2: '顶层转两下（半圈）',
+  D: '底层往右转', "D'": '底层往左转', D2: '底层转两下（半圈）',
+  F: '前面像时钟一样顺时针转', "F'": '前面逆时针转', F2: '前面转两下（半圈）',
+  B: '后面顺时针转（从后面看）', "B'": '后面逆时针转（从后面看）', B2: '后面转两下（半圈）',
+  M: '中间一列往下转（跟 L 一样）', "M'": '中间一列往上转', M2: '中间一列转两下',
+  y: '整个方块往左转，右面跑到前面', "y'": '整个方块往右转，左面跑到前面', y2: '整个方块转半圈，后面跑到前面',
+  x: '整个方块往上翻，前面跑到顶上', "x'": '整个方块往下翻', x2: '整个方块翻半圈',
+  z: '整个方块往右倒', "z'": '整个方块往左倒', z2: '整个方块上下颠倒',
+  r: '右边两层一起往上转', "r'": '右边两层一起往下转', f: '前面两层一起顺时针转', "f'": '前面两层一起逆时针转',
+  l: '左边两层一起往下转', "l'": '左边两层一起往上转', u: '上面两层一起往左转', "u'": '上面两层一起往右转',
+  d: '下面两层一起往右转', "d'": '下面两层一起往左转', E: '中间一层往右转', "E'": '中间一层往左转',
+  S: '中间一片顺时针转', "S'": '中间一片逆时针转',
+};
+const shortOf = m => MOVE_SHORT[m] || m;
+const longOf = m => MOVE_LONG[m] || shortOf(m);
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const Store = {
+  get(k, d) { try { const v = localStorage.getItem('mfk-' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('mfk-' + k, JSON.stringify(v)); } catch (e) { } },
+};
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z" fill="currentColor"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>',
+  fwd: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14l10-7z" fill="currentColor"/><path d="M16 5h3v14h-3z" fill="currentColor"/></svg>',
+  back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v14L9 12z" fill="currentColor"/><path d="M5 5h3v14H5z" fill="currentColor"/></svg>',
+  restart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M3.5 3.5v5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  view: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15 15l5.5 5.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="currentColor"/></svg>',
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  retry: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/><path d="M8.5 12a3.5 3.5 0 1 0 1-2.5M8.5 7.5v2.5H11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  shuffle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.7l2.4 4.6c1 1.7 2.3 2.7 4.3 2.7H21M3 17h3.5c1.4 0 2.4-.5 3.2-1.4M14.3 8.4c.8-.9 1.8-1.4 3.2-1.4H21M18 4l3 3-3 3M18 14l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  hand: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1V4a1.5 1.5 0 0 1 3 0v6m0-.5V5.5a1.5 1.5 0 0 1 3 0V14c0 4-2.5 7-6.5 7-2.8 0-4.3-1.4-5.6-3.6L3.6 14a1.5 1.5 0 0 1 2.5-1.6L8 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
+
+/* ---------- SVG diagram helpers ---------- */
+const PHI = Math.PI / 6, CPH = Math.cos(PHI), SPH = Math.sin(PHI), RT = Math.SQRT1_2;
+const v3 = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+function proj(p, view) {
+  const [x, y, z] = p, h = (x + z) * RT;
+  return view === 'down' ? [(x - z) * RT, -h * SPH - y * CPH] : [(x - z) * RT, h * SPH - y * CPH];
+}
+const f2 = n => Math.round(n * 1000) / 1000;
+const ptsStr = a => a.map(p => f2(p[0]) + ',' + f2(p[1])).join(' ');
+
+function arrowDefs(m) {
+  const base = m.replace(/['2]/g, ''), prime = m.endsWith("'");
+  const col = (xc, up) => { const p = [[xc, -1.2, 1.56], [xc, 1.56, 1.56], [xc, 1.56, -0.95]]; return up ? p : p.reverse(); };
+  const row = (yc, left) => { const p = [[1.56, yc, -1.2], [1.56, yc, 1.56], [-0.95, yc, 1.56]]; return left ? p : p.reverse(); };
+  const arc = (rad, cw) => { const p = []; for (let t = 140; t >= -150; t -= 10) { const a = t * Math.PI / 180; p.push([rad * Math.cos(a), rad * Math.sin(a), 1.56]); } p.arc = true; if (!cw) { const q = p.reverse(); q.arc = true; return q; } return p; };
+  const bk = cw => { const p = [[1.56, -1.2, -1], [1.56, 1.56, -1], [-0.95, 1.56, -1]]; return cw ? p : p.reverse(); };
+  const sl = cw => { const p = [[-1.2, 1.56, 0], [1.56, 1.56, 0], [1.56, -0.95, 0]]; return cw ? p : p.reverse(); };
+  const d = !prime;
+  switch (base) {
+    case 'R': return [col(1, d)]; case 'L': return [col(-1, !d)]; case 'M': return [col(0, !d)];
+    case 'r': return [col(1, d), col(0, d)]; case 'l': return [col(-1, !d), col(0, !d)];
+    case 'x': return [col(1, d), col(0, d), col(-1, d)];
+    case 'U': return [row(1, d)]; case 'D': return [row(-1, !d)]; case 'E': return [row(0, !d)];
+    case 'u': return [row(1, d), row(0, d)]; case 'd': return [row(-1, !d), row(0, !d)];
+    case 'y': return [row(1, d), row(0, d), row(-1, d)];
+    case 'F': return [arc(0.95, d)]; case 'B': return [bk(d)]; case 'S': return [sl(d)];
+    case 'f': return [arc(0.95, d), sl(d)]; case 'b': return [bk(d)]; case 'z': return [arc(0.95, d), sl(d)];
+  }
+  return [];
+}
+function arrowSVG(m, view) {
+  const two = m.endsWith('2');
+  let out = '';
+  for (const pts3 of arrowDefs(m)) {
+    let d;
+    if (pts3.arc) {
+      const P = pts3.map(p => proj(p, view));
+      d = 'M' + P.map(p => f2(p[0]) + ' ' + f2(p[1])).join(' L');
+    } else {
+      const [a, b, c] = pts3;
+      const t = 0.32;
+      const b1 = v3(b, v3(a, b, -1), t / dist3(a, b)); // point before corner
+      const b2 = v3(b, v3(c, b, -1), t / dist3(c, b));
+      const A = proj(a, view), B1 = proj(b1, view), B = proj(b, view), B2 = proj(b2, view), Cc = proj(c, view);
+      d = `M${f2(A[0])} ${f2(A[1])} L${f2(B1[0])} ${f2(B1[1])} Q${f2(B[0])} ${f2(B[1])} ${f2(B2[0])} ${f2(B2[1])} L${f2(Cc[0])} ${f2(Cc[1])}`;
+    }
+    const P2 = proj(pts3[pts3.length - 1], view), P1 = proj(pts3[pts3.length - 2], view);
+    const dx = P2[0] - P1[0], dy = P2[1] - P1[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+    const tip = [P2[0] + ux * 0.28, P2[1] + uy * 0.28];
+    const bl = [P2[0] - ux * 0.08 + uy * 0.26, P2[1] - uy * 0.08 - ux * 0.26];
+    const br = [P2[0] - ux * 0.08 - uy * 0.26, P2[1] - uy * 0.08 + ux * 0.26];
+    out += `<path d="${d}" fill="none" stroke="#fff" stroke-width=".27" stroke-linecap="round" stroke-linejoin="round"/>`;
+    out += `<polygon points="${ptsStr([tip, bl, br])}" fill="#fff" stroke="#fff" stroke-width=".16" stroke-linejoin="round"/>`;
+    out += `<path d="${d}" fill="none" stroke="${BODY}" stroke-width=".13" stroke-linecap="round" stroke-linejoin="round"/>`;
+    out += `<polygon points="${ptsStr([tip, bl, br])}" fill="${BODY}"/>`;
+    if (two) {
+      const cx = P2[0] - ux * 0.1 + uy * 0.5, cy = P2[1] - uy * 0.1 - ux * 0.5;
+      out += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r=".3" fill="${BODY}" stroke="#fff" stroke-width=".06"/><text x="${f2(cx)}" y="${f2(cy + 0.11)}" text-anchor="middle" font-size=".34" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">2</text>`;
+    }
+  }
+  return out;
+}
+function dist3(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
+function faceSVG(state, f, view, o) {
+  const { n, r, d } = Cube.FD[f];
+  const c0 = n.map(v => v * 1.5);
+  const P = (a, b) => proj(v3(v3(c0, r, a), d, b), view);
+  let s = `<polygon points="${ptsStr([P(-1.5, -1.5), P(1.5, -1.5), P(1.5, 1.5), P(-1.5, 1.5)])}" fill="${BODY}" stroke="${BODY}" stroke-width=".12" stroke-linejoin="round"/>`;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+    const k = Cube.FACES.indexOf(f) * 9 + i * 3 + j;
+    const cc = v3(v3(c0, r, j - 1), d, i - 1);
+    const Q = (a, b) => proj(v3(v3(cc, r, a), d, b), view);
+    const q = 0.41;
+    const col = HEX[state[k]] || HEX.X;
+    const dim = o.hl && !o.hl.has(k);
+    s += `<polygon points="${ptsStr([Q(-q, -q), Q(q, -q), Q(q, q), Q(-q, q)])}" fill="${col}" stroke="${col}" stroke-width=".07" stroke-linejoin="round"${dim ? ' opacity=".22"' : ''}/>`;
+  }
+  return s;
+}
+function isoSVG(state, o = {}) {
+  const view = o.view || 'up';
+  if (view === 'both') {
+    return `<div class="iso-pair">${isoSVG(state, { ...o, view: 'up' })}${isoSVG(state, { ...o, view: 'down', move: null })}</div>`;
+  }
+  const faces = view === 'down' ? ['D', 'F', 'R'] : ['U', 'F', 'R'];
+  let s = faces.map(f => faceSVG(state, f, view, o)).join('');
+  if (o.move && view === 'up') s += arrowSVG(o.move, view);
+  if (o.marks) for (const k in o.marks) {
+    const sl = Cube.SLOTS[k];
+    if (!faces.includes(sl.f)) continue;
+    const C = proj(v3(sl.n, sl.p, 0).map((v, i) => sl.p[i] + sl.n[i] * 0.5), view);
+    s += `<circle cx="${f2(C[0])}" cy="${f2(C[1])}" r=".29" fill="${BODY}" stroke="#fff" stroke-width=".05"/><text x="${f2(C[0])}" y="${f2(C[1] + 0.12)}" text-anchor="middle" font-size=".34" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">${esc(o.marks[k])}</text>`;
+  }
+  const cap = view === 'down' ? '<text x="0" y="2.95" text-anchor="middle" font-size=".34" class="svg-cap">从下面看</text>' : '';
+  const vb = view === 'down' ? '-2.6 -2.5 5.2 5.6' : '-2.6 -2.75 5.2 5.3';
+  return `<svg class="iso" viewBox="${vb}" role="img" aria-label="${esc(o.label || '魔术方块图')}">${s}${cap}</svg>`;
+}
+function topSVG(state, o = {}) {
+  let s = `<rect x="-1.62" y="-1.62" width="3.24" height="3.24" rx=".2" fill="${BODY}"/>`;
+  const dim = k => o.hl && !o.hl.has(k) ? ' opacity=".22"' : '';
+  for (const sl of Cube.SLOTS) {
+    if (sl.p[1] !== 1) continue;
+    const col = HEX[state[sl.k]] || HEX.X;
+    if (sl.f === 'U') {
+      s += `<rect x="${sl.p[0] - 0.44}" y="${sl.p[2] - 0.44}" width=".88" height=".88" rx=".12" fill="${col}"${dim(sl.k)}/>`;
+    } else {
+      const n = sl.n;
+      let x, y, w, h;
+      if (n[0]) { w = 0.34; h = 0.9; x = n[0] * 1.9 - w / 2; y = sl.p[2] - h / 2; }
+      else { w = 0.9; h = 0.34; y = n[2] * 1.9 - h / 2; x = sl.p[0] - w / 2; }
+      s += `<rect x="${f2(x)}" y="${f2(y)}" width="${w}" height="${h}" rx=".09" fill="${col}" stroke="${BODY}" stroke-width=".07"${dim(sl.k)}/>`;
+    }
+  }
+  if (o.alg) s += pllArrowsSVG(o.alg);
+  if (o.labels !== false) {
+    s += `<text x="0" y="2.62" text-anchor="middle" font-size=".34" class="svg-cap">前（对着你）</text>`;
+    s += `<text x="0" y="-2.4" text-anchor="middle" font-size=".34" class="svg-cap">后</text>`;
+    s += `<text x="-2.42" y=".12" text-anchor="middle" font-size=".34" class="svg-cap">左</text>`;
+    s += `<text x="2.42" y=".12" text-anchor="middle" font-size=".34" class="svg-cap">右</text>`;
+  }
+  return `<svg class="top" viewBox="-2.75 -2.75 5.5 5.6" role="img" aria-label="${esc(o.label || '顶面图（黄色面朝上，从上往下看）')}">${s}</svg>`;
+}
+function pllArrowsSVG(alg) {
+  const ids = Array.from({ length: 54 }, (_, i) => i);
+  const after = Cube.apply(ids, alg);
+  const pairs = [];
+  for (let np = 0; np < 54; np++) {
+    const old = after[np];
+    if (old !== np && Cube.SLOTS[old].f === 'U' && Cube.SLOTS[np].f === 'U') pairs.push([old, np]);
+  }
+  let s = '';
+  const done = new Set();
+  for (const [a, b] of pairs) {
+    if (done.has(a + '-' + b)) continue;
+    const back = pairs.some(([x, y]) => x === b && y === a);
+    done.add(a + '-' + b); if (back) done.add(b + '-' + a);
+    const A = Cube.SLOTS[a].p, B = Cube.SLOTS[b].p;
+    let x1 = A[0], y1 = A[2], x2 = B[0], y2 = B[2];
+    const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L;
+    const sh = 0.2;
+    x1 += ux * sh; y1 += uy * sh; x2 -= ux * sh; y2 -= uy * sh;
+    const head = (x, y, dx, dy) => `<polygon points="${ptsStr([[x + dx * .02, y + dy * .02], [x - dx * .3 + dy * .17, y - dy * .3 - dx * .17], [x - dx * .3 - dy * .17, y - dy * .3 + dx * .17]])}" fill="${BODY}" stroke="#fff" stroke-width=".05"/>`;
+    s += `<line x1="${f2(x1)}" y1="${f2(y1)}" x2="${f2(x2)}" y2="${f2(y2)}" stroke="#fff" stroke-width=".2" stroke-linecap="round"/>`;
+    s += `<line x1="${f2(x1 + (back ? ux * .2 : 0))}" y1="${f2(y1 + (back ? uy * .2 : 0))}" x2="${f2(x2 - ux * .2)}" y2="${f2(y2 - uy * .2)}" stroke="${BODY}" stroke-width=".09" stroke-linecap="round"/>`;
+    s += head(x2, y2, ux, uy);
+    if (back) s += head(x1, y1, -ux, -uy);
+  }
+  return s;
+}
+const NET_POS = { U: [3, 0], L: [0, 3], F: [3, 3], R: [6, 3], B: [9, 3], D: [3, 6] };
+function netSVG(state, o = {}) {
+  let s = '';
+  for (const f of Cube.FACES) {
+    const [fx, fy] = NET_POS[f];
+    s += `<rect x="${fx + .02}" y="${fy + .02}" width="2.96" height="2.96" rx=".22" fill="${BODY}"/>`;
+    if (o.faceLabels) s += `<text x="${fx + 1.5}" y="${fy - .12}" text-anchor="middle" font-size=".42" class="svg-cap">${o.faceLabels[f]}</text>`;
+  }
+  for (const sl of Cube.SLOTS) {
+    const [fx, fy] = NET_POS[sl.f];
+    const col = HEX[state[sl.k]] || HEX.X;
+    const dim = o.hl && !o.hl.has(sl.k) ? ' opacity=".25"' : '';
+    s += `<rect class="net-st" data-slot="${sl.k}" x="${fx + sl.j + .1}" y="${fy + sl.i + .1}" width=".8" height=".8" rx=".12" fill="${col}"${dim}/>`;
+  }
+  const top = o.faceLabels ? -0.7 : 0;
+  return `<svg class="net" viewBox="-.1 ${top} 12.2 ${9.2 - top}" role="img" aria-label="${esc(o.label || '展开图')}">${s}</svg>`;
+}
+function stickerGridSVG(cells, o = {}) { // 3x3 face from 9 colors
+  let s = `<rect x="0" y="0" width="3.2" height="3.2" rx=".28" fill="${BODY}"/>`;
+  cells.forEach((c, i) => { const x = i % 3, y = Math.floor(i / 3); s += `<rect data-i="${i}" x="${x + .18}" y="${y + .18}" width=".86" height=".86" rx=".14" fill="${HEX[c] || 'transparent'}" ${c ? '' : 'stroke="#5a6170" stroke-width=".05" stroke-dasharray=".12 .1"'}/>`; });
+  return `<svg class="grid3" viewBox="0 0 3.2 3.2" role="img" aria-label="${esc(o.label || '一个面')}">${s}</svg>`;
+}
+
+/* ---------- 3D cube (CSS 3D) ---------- */
+const FACE_TF = { U: 'rotateX(90deg)', D: 'rotateX(-90deg)', F: 'rotateY(0deg)', B: 'rotateY(180deg)', R: 'rotateY(90deg)', L: 'rotateY(-90deg)' };
+class CubeView {
+  constructor(host, o = {}) {
+    this.host = host;
+    this.state = (o.state || Cube.solved()).slice();
+    this.home = [o.rx ?? -26, o.ry ?? -36];
+    [this.rx, this.ry] = this.home;
+    this.dur = o.dur || 380;
+    this.gen = 0;
+    this.onSticker = o.onSticker || null;
+    this.onUserRotate = o.onUserRotate || null;
+    host.classList.add('cv');
+    host.innerHTML = '<div class="cv-scene"><div class="cv-cube"></div></div>';
+    this.scene = host.firstChild; this.cube = this.scene.firstChild;
+    this.cubies = []; this.stickers = new Array(54);
+    for (const P of Cube.POS) {
+      const p = P.p;
+      const el = document.createElement('div');
+      el.className = 'cubie';
+      const base = `translate3d(${p[0]}em,${-p[1]}em,${p[2]}em)`;
+      el.style.transform = base;
+      let html = '';
+      for (const f of ['U', 'D', 'F', 'B', 'R', 'L']) {
+        const k = Cube.slotAt(p, Cube.N[f]);
+        html += `<div class="cf" style="transform:${FACE_TF[f]} translateZ(.5em)">${k !== undefined ? `<div class="st" data-slot="${k}"></div>` : ''}</div>`;
+      }
+      el.innerHTML = html;
+      this.cube.appendChild(el);
+      this.cubies.push({ el, p, base });
+    }
+    host.querySelectorAll('.st').forEach(s => { this.stickers[+s.dataset.slot] = s; });
+    this.paint(); this.applyView();
+    if (window.ResizeObserver) { this.ro = new ResizeObserver(() => this.fit()); this.ro.observe(host); }
+    this.fit();
+    this.bindDrag();
+  }
+  fit() {
+    const w = this.host.clientWidth || 300;
+    const s = w / 5.6;
+    this.scene.style.fontSize = s + 'px';
+    this.scene.style.perspective = (s * 22) + 'px';
+  }
+  paint() { for (let k = 0; k < 54; k++) this.stickers[k].dataset.c = this.state[k]; }
+  setState(s) { this.gen++; cancelAnimationFrame(this.raf); this.cubies.forEach(c => c.el.style.transform = c.base); this.state = s.slice(); this.paint(); }
+  setHighlight(set) { for (let k = 0; k < 54; k++) this.stickers[k].classList.toggle('dim', !!set && !set.has(k)); }
+  applyView() { this.cube.style.transform = `rotateX(${this.rx}deg) rotateY(${this.ry}deg)`; }
+  resetView() {
+    const [tx, ty] = this.home, sx = this.rx, sy = this.ry;
+    let ny = ((sy - ty) % 360 + 540) % 360 - 180;
+    const t0 = performance.now(), D = 450;
+    const st = now => {
+      const t = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - t, 3);
+      this.rx = sx + (tx - sx) * e; this.ry = ty + ny * (1 - e);
+      this.applyView();
+      if (t < 1) requestAnimationFrame(st);
+    };
+    requestAnimationFrame(st);
+  }
+  bindDrag() {
+    let down = null;
+    this.host.addEventListener('pointerdown', e => {
+      if (e.button !== undefined && e.button !== 0) return;
+      down = { x: e.clientX, y: e.clientY, rx: this.rx, ry: this.ry, moved: false, target: e.target };
+      try { this.host.setPointerCapture(e.pointerId); } catch (_) { }
+    });
+    this.host.addEventListener('pointermove', e => {
+      if (!down) return;
+      const dx = e.clientX - down.x, dy = e.clientY - down.y;
+      if (!down.moved && Math.hypot(dx, dy) < 6) return;
+      down.moved = true;
+      this.ry = down.ry + dx * 0.55;
+      this.rx = Math.max(-88, Math.min(88, down.rx - dy * 0.55));
+      this.applyView();
+      if (this.onUserRotate) this.onUserRotate();
+    });
+    const up = e => {
+      if (!down) return;
+      const d = down; down = null;
+      if (!d.moved && this.onSticker) {
+        const t = d.target.closest && d.target.closest('.st');
+        if (t) this.onSticker(+t.dataset.slot, t);
+      }
+    };
+    this.host.addEventListener('pointerup', up);
+    this.host.addEventListener('pointercancel', () => { down = null; });
+    this.host.addEventListener('dblclick', () => this.resetView());
+  }
+  turn(m, dur = this.dur) {
+    return new Promise(res => {
+      const base = m.replace(/['2]/g, '');
+      const def = Cube.MD[base];
+      if (!def) { res(); return; }
+      const [axis, sign, layer] = def;
+      const q = m.endsWith('2') ? 2 : (m.endsWith("'") ? -1 : 1);
+      const ours = sign * 90 * q;
+      const css = axis === 1 ? ours : -ours;
+      const fn = ['rotateX', 'rotateY', 'rotateZ'][axis];
+      const parts = this.cubies.filter(c => layer(c.p));
+      const total = (Math.abs(q) === 2 ? 1.45 : 1) * dur;
+      const gen = this.gen;
+      const finish = () => {
+        parts.forEach(c => c.el.style.transform = c.base);
+        if (gen === this.gen) { this.state = Cube.apply(this.state, [m]); this.paint(); }
+        res();
+      };
+      if (reduceMotion() || total < 30) { finish(); return; }
+      const t0 = performance.now();
+      const step = now => {
+        if (gen !== this.gen) { res(); return; }
+        const t = Math.min(1, (now - t0) / total);
+        const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const a = css * e;
+        for (const c of parts) c.el.style.transform = `${fn}(${a}deg) ${c.base}`;
+        if (t < 1) this.raf = requestAnimationFrame(step); else finish();
+      };
+      this.raf = requestAnimationFrame(step);
+    });
+  }
+  destroy() { this.gen++; cancelAnimationFrame(this.raf); if (this.ro) this.ro.disconnect(); }
+}
+
+/* ---------- annotate move lists into readable groups ---------- */
+const KNOWN = [
+  { name: '往右放公式', alg: "U R U' R' U' F' U F" },
+  { name: '往左放公式', alg: "U' L' U L U F U' F'" },
+  { name: '棱块公式', alg: "R U' R U R U R U' R' U' R2" },
+  { name: '车灯公式', alg: "R' F R' B2 R F' R' B2 R2" },
+  { name: '小鱼公式', alg: "R U R' U R U2 R'" },
+  { name: '黄十字公式', alg: "F R U R' U' F'" },
+  { name: '上左下右', alg: "R U R' U'", rep: true },
+].map(k => ({ ...k, m: Cube.parse(k.alg) }));
+function annotate(moves, stage) {
+  const segs = [];
+  let i = 0;
+  const pushMisc = (m) => {
+    let name = /^[U]/.test(m) ? '转顶层' : /^[y]/.test(m) ? '整个方块转' : '转动';
+    if (stage === 'daisy') name = '送花瓣上去';
+    if (stage === 'cross' && /2$/.test(m) && m[0] !== 'U') name = '转两下';
+    const last = segs[segs.length - 1];
+    if (last && last.misc && last.name === name && stage === 'daisy') { last.moves.push(m); return; }
+    segs.push({ name, moves: [m], misc: true });
+  };
+  while (i < moves.length) {
+    let hit = null;
+    for (const k of KNOWN) {
+      if (k.m.every((x, j) => moves[i + j] === x)) { hit = k; break; }
+    }
+    if (hit) {
+      let reps = 1;
+      if (hit.rep) while (hit.m.every((x, j) => moves[i + reps * 4 + j] === x)) reps++;
+      const ms = moves.slice(i, i + hit.m.length * reps);
+      segs.push({ name: hit.name + (reps > 1 ? ' ×' + reps : ''), moves: ms, alg: hit.alg, reps });
+      i += ms.length;
+    } else { pushMisc(moves[i]); i++; }
+  }
+  return segs;
+}
+
+/* ---------- step player ---------- */
+const SPEEDS = { slow: 700, mid: 400, fast: 210, turbo: 105 };
+class Player {
+  constructor(host, o = {}) {
+    this.host = host;
+    host.classList.add('pl');
+    host.innerHTML = `
+      <div class="pl-head"><div class="pl-title"></div><div class="pl-sub"></div></div>
+      <div class="pl-stage">
+        <div class="pl-cube"></div>
+        <button class="icon-btn pl-viewbtn" type="button" aria-label="把视角转回正面" title="回到正面">${ICON.view}</button>
+        <div class="pl-drag">${ICON.hand}<span>拖动可以转着看</span></div>
+      </div>
+      <div class="pl-next" aria-live="polite"></div>
+      <div class="pl-ctrl">
+        <button class="icon-btn" type="button" data-a="restart" aria-label="从头开始" title="从头开始">${ICON.restart}</button>
+        <button class="icon-btn" type="button" data-a="back" aria-label="退一步" title="退一步">${ICON.back}</button>
+        <button class="btn pl-play" type="button" data-a="play">${ICON.play}<span>播放</span></button>
+        <button class="icon-btn" type="button" data-a="fwd" aria-label="走一步" title="走一步">${ICON.fwd}</button>
+        <div class="seg" role="group" aria-label="速度">
+          <button type="button" data-s="slow">慢</button><button type="button" data-s="mid">中</button><button type="button" data-s="fast">快</button>
+        </div>
+      </div>
+      <div class="pl-chips"></div>`;
+    this.view = new CubeView(host.querySelector('.pl-cube'), { state: o.state });
+    this.speed = Store.get('speed', 'mid');
+    this.start = this.view.state.slice(); this.moves = []; this.idx = 0; this.segs = [];
+    this.gen = 0; this.busy = false; this.playing = false; this.playTok = 0;
+    host.querySelector('.pl-viewbtn').onclick = () => this.view.resetView();
+    host.querySelector('.pl-ctrl').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.s) { this.speed = b.dataset.s; Store.set('speed', this.speed); this.renderSpeed(); return; }
+      const a = b.dataset.a;
+      if (a === 'play') this.playing ? this.pause() : this.play();
+      if (a === 'fwd') { this.pause(); this.fwd(); }
+      if (a === 'back') { this.pause(); this.back(); }
+      if (a === 'restart') { this.pause(); this.seek(0); }
+    });
+    host.querySelector('.pl-chips').addEventListener('click', e => {
+      const b = e.target.closest('.mv'); if (!b) return;
+      this.pause(); this.seek(+b.dataset.i);
+    });
+    this.renderSpeed();
+    this.load({ state: this.start, moves: [], title: o.title || '', sub: o.sub || '' });
+  }
+  get dur() { return SPEEDS[this.speedOverride || this.speed] || 400; }
+  renderSpeed() { this.host.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.s === this.speed)); }
+  load(spec) {
+    this.pause();
+    this.gen++;
+    this.busy = false;
+    this.start = spec.state.slice();
+    this.moves = (spec.moves || []).slice();
+    this.segs = spec.segs || (this.moves.length ? [{ name: spec.groupName || '公式', moves: this.moves }] : []);
+    let i = 0; this.segs.forEach(s => { s.from = i; i += s.moves.length; s.to = i; });
+    this.finishText = spec.finishText || '完成！';
+    this.idx = 0;
+    this.view.setState(this.start);
+    this.host.querySelector('.pl-title').textContent = spec.title || '';
+    this.host.querySelector('.pl-sub').textContent = spec.sub || '';
+    this.renderChips();
+    this.render();
+  }
+  renderChips() {
+    const box = this.host.querySelector('.pl-chips');
+    if (!this.moves.length) { box.innerHTML = ''; box.hidden = true; return; }
+    box.hidden = false;
+    let html = '', lastStage = null;
+    this.segs.forEach((s, si) => {
+      if (s.stage && s.stage !== lastStage) { html += `<div class="pl-stagehead">${esc(s.stage)}</div>`; lastStage = s.stage; }
+      html += `<div class="pl-seg"><div class="pl-segname">${esc(s.name)}</div><div class="pl-segchips">`;
+      s.moves.forEach((m, j) => { const i = s.from + j; html += `<button type="button" class="mv" data-i="${i}" aria-label="第${i + 1}步 ${m}"><b>${esc(m)}</b><small>${esc(shortOf(m))}</small></button>`; });
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
+  }
+  segAt(i) { return this.segs.find(s => i >= s.from && i < s.to); }
+  render() {
+    const chips = this.host.querySelectorAll('.mv');
+    chips.forEach((c, i) => { c.classList.toggle('done', i < this.idx); c.classList.toggle('now', i === this.idx); });
+    const now = chips[this.idx];
+    if (now) {
+      const box = this.host.querySelector('.pl-chips');
+      const top = now.offsetTop - box.offsetTop;
+      if (top < box.scrollTop || top > box.scrollTop + box.clientHeight - 50) box.scrollTop = top - 40;
+    }
+    const nx = this.host.querySelector('.pl-next');
+    if (!this.moves.length) { nx.innerHTML = ''; nx.hidden = true; }
+    else if (this.idx >= this.moves.length) {
+      nx.hidden = false;
+      nx.innerHTML = `<div class="nx-done">${ICON.check}<div><b>${esc(this.finishText)}</b><span>一共 ${this.moves.length} 步。按 ${ICON.restart} 可以再看一次。</span></div></div>`;
+    } else {
+      nx.hidden = false;
+      const m = this.moves[this.idx], seg = this.segAt(this.idx);
+      let segInfo = seg ? esc(seg.name) : '';
+      if (seg && seg.reps > 1) { const k = Math.floor((this.idx - seg.from) / 4) + 1; segInfo += `（第 ${k} 次）`; }
+      nx.innerHTML = `<div class="nx-pic">${isoSVG(this.view.state, { move: m, label: '下一步的转法' })}</div>
+        <div class="nx-text"><span class="nx-k">下一步 · ${this.idx + 1}/${this.moves.length}</span>
+        <div class="nx-move"><b>${esc(m)}</b><span>${esc(shortOf(m))}</span></div>
+        <p>${esc(longOf(m))}</p>${segInfo ? `<span class="nx-seg">${seg && seg.stage ? esc(seg.stage) + ' · ' : ''}${segInfo}</span>` : ''}</div>`;
+    }
+    const pb = this.host.querySelector('.pl-play');
+    pb.innerHTML = this.playing ? `${ICON.pause}<span>暂停</span>` : `${ICON.play}<span>${this.idx >= this.moves.length && this.moves.length ? '再看一次' : '播放'}</span>`;
+    pb.disabled = !this.moves.length;
+    if (this.onChange) this.onChange(this.idx);
+  }
+  async fwd() {
+    if (this.busy || this.idx >= this.moves.length) return;
+    this.busy = true; const g = this.gen;
+    await this.view.turn(this.moves[this.idx], this.dur);
+    if (g !== this.gen) return;
+    this.idx++; this.busy = false; this.render();
+  }
+  async back() {
+    if (this.busy || this.idx <= 0) return;
+    this.busy = true; const g = this.gen;
+    await this.view.turn(Cube.invMove(this.moves[this.idx - 1]), this.dur);
+    if (g !== this.gen) return;
+    this.idx--; this.busy = false; this.render();
+  }
+  seek(i) {
+    this.gen++; this.busy = false;
+    this.view.setState(Cube.apply(this.start, this.moves.slice(0, i)));
+    this.idx = i; this.render();
+  }
+  async play() {
+    if (!this.moves.length || this.playing) return;
+    if (this.idx >= this.moves.length) { this.seek(0); }
+    this.playing = true; const tok = ++this.playTok; this.render();
+    const g = this.gen;
+    await sleep(120);
+    while (this.playing && tok === this.playTok && g === this.gen && this.idx < this.moves.length) {
+      if (this.busy) { await sleep(40); continue; }
+      const before = this.segAt(this.idx);
+      await this.fwd();
+      if (g !== this.gen || tok !== this.playTok) break;
+      const after = this.segAt(this.idx);
+      if (before && after && before.stage && after.stage !== before.stage) await sleep(Math.max(500, this.dur * 2));
+      else if (this.dur >= 600) await sleep(120);
+    }
+    if (tok === this.playTok && g === this.gen) { this.playing = false; this.render(); }
+  }
+  pause() { if (this.playing) { this.playing = false; this.playTok++; this.render(); } }
+  destroy() { this.pause(); this.gen++; this.view.destroy(); }
+}
+
+/* ---------- small helpers for rendering chips ---------- */
+function algChips(alg, o = {}) {
+  const ms = Cube.parse(alg);
+  return `<div class="alg-chips${o.big ? ' big' : ''}">${ms.map(m => `<span class="mv static"><b>${esc(m)}</b><small>${esc(shortOf(m))}</small></span>`).join('')}</div>`;
+}
+function colorDots(cols) { return cols.map(c => `<i class="dot" style="background:${HEX[c]}"></i>`).join(''); }
+function toast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200);
+}
+/* ===== Cases, quizzes and lesson content ===== */
+const A = {
+  sexy: "R U R' U'",
+  right: "U R U' R' U' F' U F",
+  left: "U' L' U L U F U' F'",
+  fruruf: "F R U R' U' F'",
+  furuRf: "F U R U' R' F'",
+  dot: "F R U R' U' F' f R U R' U' f'",
+  sune: "R U R' U R U2 R'",
+  anti: "R U2 R' U' R U' R'",
+  H: "F R U R' U' R U R' U' R U R' U' F'",
+  pi: "R U2 R2 U' R2 U' R2 U2 R",
+  headl: "R2 D R' U2 R D' R' U2 R'",
+  T: "r U R' U' r' F R F'",
+  bow: "F' r U R' U' r' F R",
+  aperm: "R' F R' B2 R F' R' B2 R2",
+  yperm: "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+  ua: "R U' R U R U R U' R' U' R2",
+  ub: "R2 U R U R' U' R' U' R' U R'",
+  hperm: "R2 U2 R U2 R2 U2 R2 U2 R U2 R2",
+  zperm: "R' U' R U' R U R U' R' U R U R2 U' R' U2",
+};
+const rep = (a, n) => Array(n).fill(a).join(' ');
+const DAISY = 'F2 R2 B2 L2';
+const STAGE_KEYS = ['daisy', 'cross', 'corners', 'second', 'ycross', 'yface', 'cperm', 'eperm'];
+const STAGE_TITLE = ['第1步 · 小雏菊', '第1步 · 白十字', '第2步 · 白色角块', '第3步 · 第二层', '第4步 · 黄十字', '第5步 · 黄色面', '第6步 · 顶层角块（车灯）', '第7步 · 顶层棱块'];
+const MASK_FN = {
+  all: Cube.MASKS.all, centers: Cube.MASKS.centers, cross: Cube.MASKS.cross, f1: Cube.MASKS.f1, f2l: Cube.MASKS.f2l,
+  oll: Cube.MASKS.oll, ollEdges: Cube.MASKS.ollEdges,
+  edges: p => Cube.isEdge(p), corners: p => Cube.isCorner(p), centerOnly: p => Cube.isCenter(p),
+};
+const CASES = {
+  solved: { mask: 'all', title: '还原好的魔术方块' },
+  sexy6: { mask: 'all', sol: rep(A.sexy, 6), title: '上左下右 × 6 次', sub: '做完 6 次，方块会变回原样' },
+  pcenter: { mask: 'centerOnly', title: '6 个中心块', sub: '其他小块先变成灰色' },
+  pedge: { mask: 'edges', title: '12 个棱块' },
+  pcorner: { mask: 'corners', title: '8 个角块' },
+  // step 1
+  'd-goal': { mask: 'cross', pre: DAISY, title: '小雏菊完成了', sub: '黄色花心，4 片白色花瓣' },
+  'd-mid': { mask: 'cross', pre: DAISY, inv: 'R', title: '在中间层', view: 'up' },
+  'd-down': { mask: 'cross', pre: DAISY, inv: "U' F2", title: '在底层，白色朝下', view: 'both' },
+  'd-flip': { mask: 'cross', pre: DAISY, inv: "F U' R", title: '在顶层，白色朝外' },
+  'd-side': { mask: 'cross', pre: DAISY, inv: "F U L'", title: '在底层，白色朝外' },
+  'c-from': { mask: 'cross', pre: DAISY + " U", solver: 1, title: '小雏菊 → 白十字', sub: '对齐颜色，转两下，重复 4 次' },
+  'c-goal': { mask: 'cross', title: '白十字完成', view: 'down' },
+  // step 2
+  'k-goal': { mask: 'f1', title: '第一层完成', view: 'down' },
+  'k-right': { mask: 'f1', inv: A.sexy, title: '白色朝右：做 1 次' },
+  'k-up': { mask: 'f1', inv: rep(A.sexy, 3), title: '白色朝上：做 3 次' },
+  'k-front': { mask: 'f1', inv: rep(A.sexy, 5), title: '白色朝前：做 5 次' },
+  'k-above': { mask: 'f1', inv: 'U ' + A.sexy, title: '先对准，再重复', sub: '先转顶层送到正上方，再上左下右' },
+  'k-stuck': { mask: 'f1', setup: "R U R' L' U' L R U R'", solver: 2, title: '角块卡在底层' },
+  // step 3
+  's-goal': { mask: 'f2l', title: '前两层完成' },
+  's-right': { mask: 'f2l', inv: A.right, title: '往右放' },
+  's-left': { mask: 'f2l', inv: A.left, title: '往左放' },
+  's-align': { mask: 'f2l', inv: 'U2 ' + A.right, title: '先连成倒 T，再放' },
+  's-stuck': { mask: 'f2l', setup: [A.right, 'U2', A.right].join(' '), solver: 3, title: '棱块卡在中间层' },
+  // step 4
+  'y-goal': { mask: 'ollEdges', title: '黄十字完成', view: 'top' },
+  'y-dot': { mask: 'ollEdges', inv: A.dot, solver: 4, title: '点', view: 'top' },
+  'y-L': { mask: 'ollEdges', inv: A.furuRf, solver: 4, title: '小拐弯 L', view: 'top' },
+  'y-line': { mask: 'ollEdges', inv: A.fruruf, solver: 4, title: '一字', view: 'top' },
+  // step 5
+  'f-goal': { mask: 'oll', title: '黄色面完成', view: 'top' },
+  'f-fish': { mask: 'oll', inv: A.sune, solver: 5, title: '1 个：小鱼', view: 'top' },
+  'f-zero': { mask: 'oll', inv: A.H, solver: 5, title: '0 个', view: 'top' },
+  'f-two': { mask: 'oll', inv: A.T, solver: 5, title: '2 个', view: 'top' },
+  // step 6
+  'p-back': { mask: 'all', inv: A.aperm, solver: 6, title: '车灯在后面', view: 'top' },
+  'p-side': { mask: 'all', setup: Cube.invert(A.aperm).join(' ') + ' U', solver: 6, title: '车灯在右边', view: 'top' },
+  'p-none': { mask: 'all', inv: A.yperm, solver: 6, title: '没有车灯', view: 'top' },
+  // step 7
+  'e-back': { mask: 'all', inv: A.ua, solver: 7, title: '完成的面在后面', view: 'top' },
+  'e-other': { mask: 'all', inv: A.ub, solver: 7, title: '做一次还不对', view: 'top' },
+  'e-none': { mask: 'all', inv: A.hperm, solver: 7, title: '一面都没完成', view: 'top' },
+};
+function caseState(id) {
+  const c = CASES[id];
+  let s = Cube.mask(MASK_FN[c.mask] || Cube.MASKS.all);
+  if (c.pre) s = Cube.apply(s, c.pre);
+  if (c.inv) s = Cube.apply(s, Cube.invert(c.inv));
+  if (c.setup) s = Cube.apply(s, c.setup);
+  return s;
+}
+function caseMoves(id, s) {
+  const c = CASES[id];
+  if (c.sol) return Cube.parse(c.sol);
+  if (c.solver != null) return Cube.STAGES[c.solver].fn(s).moves;
+  if (c.inv) return Cube.parse(c.inv);
+  return [];
+}
+function caseFig(id, extra = {}) {
+  const c = CASES[id];
+  const s = caseState(id);
+  const view = extra.view || c.view || 'up';
+  if (view === 'top') return topSVG(s, { label: c.title, ...extra });
+  return isoSVG(s, { view, label: c.title, ...extra });
+}
+function caseSpec(id) {
+  const c = CASES[id];
+  const s = caseState(id);
+  const moves = caseMoves(id, s);
+  const stage = c.solver != null ? STAGE_KEYS[c.solver] : null;
+  let segs = moves.length ? annotate(moves, stage) : [];
+  if (c.solver == null && segs.length && segs.every(x => x.misc)) segs = [{ name: c.title, moves }];
+  return { state: s, moves, segs, title: c.title, sub: c.sub || (moves.length ? '按播放看演示，或一步一步看' : '拖动方块，转着看看') };
+}
+
+/* ---------- random practice (previous steps solved for you) ---------- */
+function practiceSpec(stage) {
+  for (let t = 0; t < 30; t++) {
+    const sc = Cube.randomScramble(25);
+    let s = Cube.apply(Cube.solved(), sc);
+    s = Cube.solveBeginner(s, stage).state;
+    const r = Cube.STAGES[stage].fn(s);
+    if (!r.moves.length) continue;
+    return {
+      state: s, moves: r.moves, segs: annotate(r.moves, STAGE_KEYS[stage]),
+      title: '随机练习：' + STAGE_TITLE[stage], sub: '先观察，想一想怎么做。想好了再按播放看答案。', finishText: '这一步完成！',
+    };
+  }
+}
+
+/* ---------- spot quizzes (observation questions) ---------- */
+const SIDE_CN = { F: '前面', R: '右面', B: '后面', L: '左面' };
+const rot24 = () => { let s = Cube.solved(); const n = Math.floor(Math.random() * 6); const first = ['', 'x', 'x2', "x'", 'z', "z'"][n]; return Cube.apply(s, [first, pick(['', 'y', 'y2', "y'"])].filter(Boolean)); };
+const QUIZ = {
+  piece() {
+    if (Math.random() < 0.35) {
+      const c = pick(['W', 'Y', 'R', 'O', 'B', 'G']);
+      const opp = { W: 'Y', Y: 'W', R: 'O', O: 'R', B: 'G', G: 'B' }[c];
+      const opts = shuffle([opp, ...shuffle(['W', 'Y', 'R', 'O', 'B', 'G'].filter(x => x !== c && x !== opp)).slice(0, 3)]);
+      return {
+        fig: `<div class="swatch-big" style="background:${HEX[c]}"></div>`, q: `${CN[c]}色的对面是什么颜色？`,
+        opts: opts.map(x => CN[x] + '色'), ans: opts.indexOf(opp), why: `${CN[c]}和${CN[opp]}是一对好朋友，永远在对面。`,
+      };
+    }
+    const vis = Cube.POS.filter(o => o.slots.some(k => ['U', 'F', 'R'].includes(Cube.SLOTS[k].f)));
+    const P = pick(vis);
+    const n = P.slots.length;
+    const s = rot24();
+    const type = n === 1 ? 0 : n === 2 ? 1 : 2;
+    return {
+      fig: isoSVG(s, { hl: new Set(P.slots), label: '有一个小块亮着' }), q: '亮着的小块是什么块？',
+      opts: ['中心块', '棱块', '角块'], ans: type,
+      why: ['它只有 1 种颜色，在一面的正中间，是中心块。', '它有 2 种颜色，在两个面中间，是棱块。', '它有 3 种颜色，在角上，是角块。'][type],
+    };
+  },
+  corner() {
+    const k = pick([1, 3, 5]);
+    const m = pick(['', 'y', 'y2', "y'"]);
+    let s = Cube.apply(Cube.mask(Cube.MASKS.f1), Cube.invert(rep(A.sexy, k)));
+    if (m) s = Cube.apply(s, [m]);
+    const dir = { 1: '右', 3: '上', 5: '前' }[k];
+    return {
+      fig: isoSVG(s, { label: '右前上方有一个白色角块' }), q: '白色角块已经在它家的正上方（右前上）。要做几次“上左下右”？',
+      opts: ['1 次', '3 次', '5 次'], ans: [1, 3, 5].indexOf(k), why: `白色朝${dir}，所以做 ${k} 次。记法：朝右 1、朝上 3、朝前 5。`,
+    };
+  },
+  second() {
+    const right = Math.random() < .5;
+    const m = pick(['', 'y', 'y2', "y'"]);
+    let s = Cube.mask(Cube.MASKS.f2l);
+    if (m) s = Cube.apply(s, [m]);
+    s = Cube.apply(s, Cube.invert(right ? A.right : A.left));
+    const top = s[Cube.slotAt([0, 1, 1], Cube.N.U)];
+    const rc = Cube.center(s, 'R');
+    return {
+      fig: isoSVG(s, { label: '前面有一个倒 T' }), q: '前面已经连成倒 T。这个棱块要往哪边放？',
+      opts: ['往左放', '往右放'], ans: right ? 1 : 0,
+      why: right ? `棱块顶上是${CN[top]}色，和右边的中心（${CN[rc]}色）一样，所以往右放。` : `棱块顶上是${CN[top]}色。右边中心是${CN[rc]}色，${CN[top]}色是它的对面，在左边，所以往左放。`,
+    };
+  },
+  shape() {
+    const want = pick(['dot', 'L', 'line', 'cross']);
+    let s;
+    for (let t = 0; t < 80; t++) {
+      s = Cube.mask(Cube.MASKS.ollEdges);
+      for (let i = 0; i < 5; i++) s = Cube.apply(s, pick([A.fruruf, A.furuRf, 'U', "U'", A.sune, A.dot]));
+      if (Cube.crossShape(s) === want) break;
+    }
+    const sh = Cube.crossShape(s);
+    const names = { dot: '点', L: '小拐弯 L', line: '一字', cross: '十字' };
+    const keys = ['dot', 'L', 'line', 'cross'];
+    const tip = { dot: '只有中心是黄色，四边都没有。直接做一次黄十字公式。', L: '两个黄色棱块挨在一起，像拐弯。放到左上角再做公式。', line: '两个黄色棱块在对面，连成一条线。横着放再做公式。', cross: '四个棱块都是黄色，十字完成了！' };
+    return { fig: topSVG(s, { label: '顶面图' }), q: '只看 4 个棱块，顶面的黄色是什么形状？', opts: keys.map(k => names[k]), ans: keys.indexOf(sh), why: tip[sh] };
+  },
+  fish() {
+    const want = pick([0, 1, 2]);
+    let s;
+    for (let t = 0; t < 80; t++) {
+      s = Cube.mask(Cube.MASKS.oll);
+      for (let i = 0; i < 4; i++) s = Cube.apply(s, pick([A.sune, A.anti, 'U', "U'", A.H, A.T]));
+      if (Cube.yellowCornersUp(s).filter(Boolean).length === want) break;
+    }
+    const c = Cube.yellowCornersUp(s).filter(Boolean).length;
+    const why = { 0: '没有黄色角块朝上。转顶层，让左前角的黄色贴在左面，再做小鱼公式。', 1: '只有 1 个，这就是小鱼！把它转到左前方，做小鱼公式。', 2: '有 2 个。转顶层，让左前角的黄色贴在左面，再做小鱼公式。', 4: '4 个都朝上，黄色面完成了！' }[c];
+    return { fig: topSVG(s, { label: '顶面图' }), q: '顶面有几个黄色角块朝上？', opts: ['0 个', '1 个', '2 个', '4 个'], ans: [0, 1, 2, 4].indexOf(c), why };
+  },
+  lights() {
+    const want = pick([0, 1, 1, 4]);
+    let s;
+    for (let t = 0; t < 80; t++) {
+      s = Cube.solved();
+      for (let i = 0; i < 4; i++) s = Cube.apply(s, pick([A.aperm, 'U', "U'", 'U2', A.yperm, A.ua]));
+      const h = Cube.headlights(s); const n = ['F', 'R', 'B', 'L'].filter(x => h[x]).length;
+      if (n === want) break;
+    }
+    const h = Cube.headlights(s); const sides = ['F', 'R', 'B', 'L'].filter(x => h[x]);
+    const opts = ['前面', '右面', '后面', '左面', '没有车灯', '四面都有'];
+    let ans, why;
+    if (sides.length === 4) { ans = 5; why = '每一面的两个角颜色都一样，角块已经对了。转顶层对齐就好。'; }
+    else if (sides.length === 0) { ans = 4; why = '没有一面的两个角同色。随便做一次车灯公式，车灯就会出现。'; }
+    else { ans = ['F', 'R', 'B', 'L'].indexOf(sides[0]); why = `${SIDE_CN[sides[0]]}的两个角颜色一样，这就是车灯。把它转到后面，再做车灯公式。`; }
+    return { fig: topSVG(s, { label: '顶面图，四边是侧面的颜色' }), q: '看四边的侧面颜色。车灯在哪一面？', opts, ans, why };
+  },
+  bar() {
+    const want = pick([0, 1, 1]);
+    let s;
+    for (let t = 0; t < 80; t++) {
+      s = Cube.solved();
+      for (let i = 0; i < 3; i++) s = Cube.apply(s, pick([A.ua, A.ub, A.hperm, 'y', "y'", A.zperm]));
+      const n = ['F', 'R', 'B', 'L'].filter(x => Cube.sideSolved(s, x)).length;
+      if (n === want) break;
+    }
+    const sides = ['F', 'R', 'B', 'L'].filter(x => Cube.sideSolved(s, x));
+    const opts = ['前面', '右面', '后面', '左面', '都没有', '全部完成'];
+    let ans, why;
+    if (sides.length === 4) { ans = 5; why = '四面都同色，已经还原了！'; }
+    else if (sides.length === 0) { ans = 4; why = '没有一面 3 格同色。先做一次棱块公式，就会出现完成的一面。'; }
+    else { ans = ['F', 'R', 'B', 'L'].indexOf(sides[0]); why = `${SIDE_CN[sides[0]]}的 3 格颜色一样。把这一面转到后面，再做棱块公式。`; }
+    return { fig: topSVG(s, { label: '顶面图' }), q: '哪一面的顶层 3 格颜色一样（已经完成）？', opts, ans, why };
+  },
+};
+
+/* ---------- lesson building blocks ---------- */
+const tip = (title, body) => `<aside class="tip"><div class="tip-ic">${ICON.eye}</div><div><b>${title}</b><p>${body}</p></div></aside>`;
+const rule = (title, body) => `<aside class="tip rule"><div class="tip-ic">${ICON.bulb}</div><div><b>${title}</b><p>${body}</p></div></aside>`;
+const fig = (id, cap) => `<figure class="dg" data-case="${id}"><div class="dg-pic"></div>${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>`;
+const caseCard = (id, title, body) => `<div class="case"><figure class="dg" data-case="${id}"><div class="dg-pic"></div></figure><div class="case-body"><h4>${title}</h4><p>${body}</p><button class="btn small demo" type="button" data-case="${id}">${ICON.play}<span>看演示</span></button></div></div>`;
+const algCard = (alg, name, chant, note, demo) => `<div class="algcard"><div class="algcard-head"><span class="algcard-name">${name}</span>${demo ? `<button class="btn small demo" type="button" data-case="${demo}">${ICON.play}<span>看演示</span></button>` : ''}</div>${algChips(alg, { big: true })}${chant ? `<div class="chant"><span>念法</span><b>${chant}</b></div>` : ''}${note ? `<p>${note}</p>` : ''}</div>`;
+const practice = stage => `<div class="practice"><div><b>随机练习</b><p>出一道这一步的题目（前面的步骤已经帮你做好）。先自己观察、想好怎么做，再按播放看答案。</p></div><button class="btn" type="button" data-practice="${stage}">${ICON.shuffle}<span>出一道题</span></button></div>`;
+const spot = (gen, n = 5) => `<div class="spotquiz" data-gen="${gen}" data-n="${n}"></div>`;
+const steps = items => `<ol class="steps">${items.map(i => `<li>${i}</li>`).join('')}</ol>`;
+const moveGrid = moves => `<div class="movegrid">${moves.split(' ').map(m => `<button type="button" class="movecard" data-move="${m}"><span class="mc-pic">${isoSVG(Cube.solved(), { move: m, label: m + ' 的转法' })}</span><span class="mc-txt"><b>${m}</b><small>${shortOf(m)}</small></span></button>`).join('')}</div>`;
+
+const LESSONS = [
+  {
+    key: 'learn-0', kicker: '第 0 关', title: '认识魔术方块', goal: '认识 6 种颜色和 3 种小块，知道“中心块决定颜色”这个大秘密。', mins: 10, first: 'solved', icon: 'solved',
+    body: () => `
+      <h2>6 个面，6 种颜色</h2>
+      <p>魔术方块有 6 个面：白、黄、红、橙、蓝、绿。还原好的时候，每一面只有一种颜色。</p>
+      <div class="pairs">
+        <div class="pair"><span class="pair-dots">${colorDots(['W', 'Y'])}</span><b>白 ↔ 黄</b><p>像一颗鸡蛋：蛋白和蛋黄，一个在上，一个在下。</p></div>
+        <div class="pair"><span class="pair-dots">${colorDots(['R', 'O'])}</span><b>红 ↔ 橙</b><p>红和橙长得很像，所以被分开，坐在两边。</p></div>
+        <div class="pair"><span class="pair-dots">${colorDots(['B', 'G'])}</span><b>蓝 ↔ 绿</b><p>蓝天和草地，永远隔得远远的。</p></div>
+      </div>
+      <p>对面的两种颜色<b>永远不会</b>出现在同一个小块上。所以，世界上没有“白+黄”的小块。</p>
+      ${tip('观察小任务', '拿起你的魔术方块转一圈：白色对面是不是黄色？红色对面是不是橙色？蓝色对面是不是绿色？')}
+      <h2>三种小块</h2>
+      <div class="cases three">
+        ${caseCard('pcenter', '中心块 · 6 个', '每一面正中间那一块，只有 1 种颜色。它们<b>永远不会换位置</b>，所以中心块的颜色，就是这一面要拼成的颜色。')}
+        ${caseCard('pedge', '棱块 · 12 个', '在两个面中间，有 2 种颜色，像一块夹心饼干。')}
+        ${caseCard('pcorner', '角块 · 8 个', '在角上，有 3 种颜色。')}
+      </div>
+      <h2>大秘密：每个小块都有自己的家</h2>
+      <p>还原魔术方块，不是“把颜色拼好”，而是<b>把每个小块送回家</b>。</p>
+      <p>家在哪里？看中心块！“黄-绿”棱块的家，在黄色中心和绿色中心中间。“黄-绿-橙”角块的家，在黄、绿、橙三个中心碰在一起的角上。</p>
+      <figure class="dg wide"><div class="dg-pic">${isoSVG(Cube.solved(), { hl: new Set([7, 19, 8, 20, 9, 4, 22, 13]), label: '黄-绿棱块和黄-绿-橙角块的家' })}</div><figcaption>亮着的是“黄-绿”棱块和“黄-绿-橙”角块，旁边是它们认路用的中心块。</figcaption></figure>
+      <h2>小测验</h2>
+      ${spot('piece', 6)}
+      <h2>今天的观察任务</h2>
+      ${steps(['找出全部 4 个白色棱块（只有白色和另一种颜色）。', '找到“黄-蓝-红”角块。', '闭上眼睛说出：白色对面是什么？绿色对面是什么？'])}
+    `,
+  },
+  {
+    key: 'learn-1', kicker: '第 1 关', title: '魔术方块的语言', goal: '看懂 R、U、F 这些字母，知道每个字母怎么转。', mins: 15, first: 'solved', icon: 'solved',
+    body: () => `
+      <h2>先拿好：黄色朝上，绿色对着你</h2>
+      <p>转之前先决定怎么拿。这套教学<b>一直</b>这样拿：黄色中心朝上，绿色中心对着你。这时右边是橙色，左边是红色。</p>
+      <figure class="dg"><div class="dg-pic">${isoSVG(Cube.solved(), { label: '黄色朝上，绿色朝前' })}</div><figcaption>标准拿法：黄上、绿前、橙右。</figcaption></figure>
+      <h2>6 个面的名字</h2>
+      <div class="facenames">
+        ${[['R', '右', 'Right'], ['L', '左', 'Left'], ['U', '上', 'Up'], ['D', '下', 'Down'], ['F', '前', 'Front'], ['B', '后', 'Back']].map(([a, b, c]) => `<div><b>${a}</b><span>${b}</span><small>${c}</small></div>`).join('')}
+      </div>
+      <p>字母就是英文的第一个字母。R 是 Right（右），U 是 Up（上）。</p>
+      <h2>只写字母 = 顺时针</h2>
+      <p>只写字母（例如 R），就是把那一面<b>顺时针</b>转 90 度。“顺时针”是：假装你的脸正对着那一面，像时钟指针那样转。</p>
+      ${moveGrid("R L U D F B")}
+      ${tip('点一点', '点任何一张卡片，旁边的魔术方块就会转给你看。图上的箭头就是转的方向。')}
+      <h2>加一撇 ' = 反方向，加 2 = 转两下</h2>
+      <p>R' 读作“R 撇”，就是反过来转。U2 是转两下，也就是半圈，往哪边转都可以。</p>
+      ${moveGrid("R' L' U' D' F' B' U2 R2")}
+      <h2>小口诀：用“上下左右”来记</h2>
+      <div class="mnemo">
+        ${[['R', "R'"], ['U', "U'"], ['F', "F'"], ['L', "L'"], ['D', "D'"]].map(([a, b]) => `<div><span class="mv static"><b>${a}</b><small>${shortOf(a)}</small></span><span class="mv static"><b>${b}</b><small>${shortOf(b)}</small></span></div>`).join('')}
+      </div>
+      ${rule('R 和 L 最容易搞反', 'R 是右边<b>往上</b>，L 是左边<b>往下</b>。不加撇的时候，左右两边“一上一下”。')}
+      <h2>整个方块一起转：y</h2>
+      <p>有时候要换一个面对着你。y 就是整个方块像 U 一样往左转，右面跑到前面来。y' 是反方向。</p>
+      ${moveGrid("y y'")}
+      <h2>第一个公式：上左下右</h2>
+      ${algCard(A.sexy, '上左下右', '上 · 左 · 下 · 右', '右手“上”（R）、顶层“左”（U）、右手“下”（R\'）、顶层“右”（U\'）。后面会用很多很多次。', 'sexy6')}
+      ${rule('神奇实验', 'R U R\' U\' 连续做 6 次，方块会变回原样！按上面的“看演示”试试，再用你自己的方块做一次。')}
+      <h2>游戏：看动画，猜字母</h2>
+      <div class="guessgame"></div>
+    `,
+  },
+  {
+    key: 'learn-2', kicker: '第 1 步', title: '白十字', goal: '在底部做出白色十字，十字四边的颜色都和中心对上。', mins: 25, first: 'd-goal', icon: 'c-goal', stage: [0, 1],
+    body: () => `
+      <h2>目标长什么样？</h2>
+      ${fig('c-goal', '从下面看：底面有白色十字，十字每一边的侧面颜色，都和那一面的中心一样。')}
+      <h2>A. 先做一朵小雏菊</h2>
+      <p>小雏菊：黄色中心是花心，4 个白色棱块是花瓣，<b>白色朝上</b>。</p>
+      ${fig('d-goal', '小雏菊：白色花瓣围着黄色花心。')}
+      ${tip('侦探时间', '先把 4 个白色棱块找出来。它们只有 2 种颜色（白 + 另一种）。有 3 种颜色的是角块，现在不用管。')}
+      <h3>把花瓣一片一片送上去</h3>
+      <p>找到一个白色棱块，看它在哪里，照下面的情况处理：</p>
+      <div class="cases">
+        ${caseCard('d-mid', '在中间层', '转它旁边的那一面，把它直接转上顶层，白色朝上。图里只要 R。')}
+        ${caseCard('d-down', '在底层，白色朝下', '先转顶层 U，让它正上方变成空位。再把那一面转两下（F2）。')}
+        ${caseCard('d-flip', '在顶层，可是白色朝外', '先把它转下去（F），转顶层让出空位（U\'），再把它转上来（R）。')}
+        ${caseCard('d-side', '在底层，白色朝外', '转一下那一面（F），它就变成“中间层”的情况。让出空位，再转上来。')}
+      </div>
+      ${rule('黄金规则', '送花瓣上去之前，先看上面的位置是不是空的。如果那里已经有白色花瓣，就转顶层 U 让开。不然会把放好的花瓣挤下去！')}
+      ${practice(0)}
+      <h2>B. 把小雏菊变成白十字</h2>
+      ${steps(['看一片花瓣的侧面颜色，例如红色。', '转顶层 U，直到这片花瓣的侧面颜色，和下面的中心一样（颜色连成一条竖线）。', '把这一面转两下（例如 F2）。白色花瓣就跑到底部了。', '其他 3 片花瓣也一样做。'])}
+      ${caseCard('c-from', '小雏菊 → 白十字', '对齐、转两下，一共 4 次。演示里的 R2、B2、L2，就是“把那一面转两下”。')}
+      ${tip('检查一下', '做完后翻过来看：底面是不是白色十字？十字的四边，侧面颜色是不是都和中心一样？不一样就是对齐时看错了。')}
+      ${practice(1)}
+    `,
+  },
+  {
+    key: 'learn-3', kicker: '第 2 步', title: '白色角块', goal: '把 4 个白色角块放回底层，完成第一层。', mins: 25, first: 'k-right', icon: 'k-goal', stage: [2],
+    body: () => `
+      <p>白十字在底部。黄色仍然朝上，绿色对着你。</p>
+      ${fig('k-goal', '目标：底面全白，而且底层一圈的侧面颜色都对上中心。')}
+      <h2>先认清角块的家</h2>
+      <p>白色角块有 3 种颜色，例如“白-绿-橙”。它的家在底层，绿色中心和橙色中心中间的那个角。</p>
+      ${tip('侦探时间', '只看有白色的角块。看它另外两种颜色，就知道它的家在哪两个中心中间。')}
+      <h2>三个动作：找、对准、重复</h2>
+      ${steps(['<b>找：</b>在顶层找一个有白色的角块。', '<b>对准：</b>转顶层 U，把它移到它家的正上方。再转整个方块（y），让它在你的<b>右前上方</b>。', '<b>重复：</b>一直做“上左下右” R U R\' U\'，直到它回家、白色朝下。'])}
+      ${algCard(A.sexy, '上左下右', '上 · 左 · 下 · 右', '')}
+      <h3>要做几次？看白色朝哪边</h3>
+      <div class="cases three">
+        ${caseCard('k-right', '白色朝右', '做 <b>1 次</b>上左下右。')}
+        ${caseCard('k-up', '白色朝上', '做 <b>3 次</b>上左下右。')}
+        ${caseCard('k-front', '白色朝前', '做 <b>5 次</b>上左下右。')}
+      </div>
+      ${rule('记住 1、3、5', '朝右 1 次，朝上 3 次，朝前 5 次。先观察再动手，数着做就不会做过头。')}
+      ${caseCard('k-above', '先对准，再重复', '角块不在右前上方？先转顶层，把它送到它家的正上方。如果它家不在右前方，就先转整个方块（y）。')}
+      <h3>特别情况：角块卡在底层</h3>
+      <p>角块已经在底层，可是位置或方向不对？把它转到右前下方，做一次上左下右，它就会被请到顶层。然后照平常的方法放回家。</p>
+      ${caseCard('k-stuck', '角块卡在底层', '先把卡住的角块“请”上来，再放回正确的家。')}
+      <h2>观察练习</h2>
+      ${spot('corner', 5)}
+      ${practice(2)}
+    `,
+  },
+  {
+    key: 'learn-4', kicker: '第 3 步', title: '第二层', goal: '把中间层的 4 个棱块放好，完成前两层。', mins: 30, first: 's-right', icon: 's-goal', stage: [3],
+    body: () => `
+      ${fig('s-goal', '目标：下面两层都完成，只剩顶层。')}
+      <h2>找哪一块？</h2>
+      <p>黄色朝上。在顶层找一个<b>没有黄色</b>的棱块。有黄色的棱块属于顶层，现在先不管。</p>
+      ${tip('侦探时间', '顶层有 4 个棱块。一个一个看：有黄色就跳过，没有黄色的就是要放下去的。')}
+      <h2>三个动作</h2>
+      ${steps(['<b>连成倒 T：</b>看棱块侧面的颜色，转顶层 U，让它和同色的中心连起来。这一面会出现一个倒过来的 T 字 ⊥。', '<b>转过来：</b>转整个方块（y），让这个倒 T 对着你。', '<b>看顶上：</b>棱块顶上的颜色和右边中心一样，就往右放；和左边中心一样，就往左放。'])}
+      <h2>两个公式</h2>
+      ${algCard(A.right, '往右放', '推走 抬起 回来 放下 ｜ 推走 抬起 回来 放下', '前半段用右边：顶层往左推走（U），右边抬起来（R），顶层转回来（U\'），右边放下去（R\'）。后半段用前面：顶层往右推走（U\'），前面抬起来（F\'），转回来（U），放下去（F）。', 's-right')}
+      ${algCard(A.left, '往左放', '推走 抬起 回来 放下 ｜ 推走 抬起 回来 放下', '跟往右放像照镜子：前半段用左边，后半段用前面，方向全部相反。', 's-left')}
+      <div class="cases">
+        ${caseCard('s-align', '先连成倒 T', '棱块不在前面？先转顶层连成倒 T，再转整个方块让它对着你。')}
+        ${caseCard('s-stuck', '棱块卡在中间层', '顶层找不到没有黄色的棱块，可是第二层还没好？把卡住的棱块转到右前方，做一次“往右放”，它就会被换到顶层。')}
+      </div>
+      <h2>观察练习</h2>
+      ${spot('second', 5)}
+      ${practice(3)}
+    `,
+  },
+  {
+    key: 'learn-5', kicker: '第 4 步', title: '黄十字', goal: '在顶面做出黄色十字（只看棱块，角块先不管）。', mins: 15, first: 'y-dot', icon: 'y-goal', stage: [4],
+    body: () => `
+      ${fig('y-goal', '从上往下看：中间一个黄色十字。灰色的地方现在不用管。')}
+      <h2>先观察：顶面是什么形状？</h2>
+      <div class="shapes">
+        ${['y-dot', 'y-L', 'y-line', 'y-goal'].map((id, i) => `<figure class="dg small" data-case="${id}"><div class="dg-pic"></div><figcaption>${['点', '小拐弯 L', '一字', '十字'][i]}</figcaption></figure>`).join('')}
+      </div>
+      ${tip('侦探时间', '只看 4 个棱块（上、下、左、右那 4 格）和中心。4 个角的颜色现在不重要。')}
+      <h2>汉堡包公式</h2>
+      ${algCard(A.fruruf, '黄十字公式', '前顺 ｜ 上 左 下 右 ｜ 前逆', '像汉堡包：两片面包是 F 和 F\'，中间夹着“上左下右”。', 'y-line')}
+      <h2>照形状做</h2>
+      <div class="cases three">
+        ${caseCard('y-dot', '点', '直接做一次公式，会变成小拐弯。')}
+        ${caseCard('y-L', '小拐弯 L', '转顶层，让它在<b>左上角</b>（像时钟的 9 点和 12 点）。做一次公式，会变成一字。')}
+        ${caseCard('y-line', '一字', '转顶层，让它<b>横着放</b>。做一次公式，十字就出来了！')}
+      </div>
+      <h2>观察练习</h2>
+      ${spot('shape', 6)}
+      ${practice(4)}
+    `,
+  },
+  {
+    key: 'learn-6', kicker: '第 5 步', title: '黄色面', goal: '让整个顶面变成黄色。', mins: 20, first: 'f-fish', icon: 'f-goal', stage: [5],
+    body: () => `
+      ${fig('f-goal', '目标：顶面 9 格全部是黄色。')}
+      <h2>先观察：数一数黄色角块</h2>
+      <p>看顶面的 4 个角，有几个是黄色朝上？可能是 0 个、1 个或 2 个。</p>
+      <h2>小鱼公式</h2>
+      ${algCard(A.sune, '小鱼公式', '上左 · 下左 · 上左左 · 下', '念成 4 拍：上左、下左、上左左、下。只用右手和顶层。', 'f-fish')}
+      <h2>照数量做</h2>
+      <div class="cases three">
+        ${caseCard('f-fish', '1 个：小鱼', '顶面像一条小鱼。转顶层，让朝上的那个黄色角在<b>左前方</b>，做一次小鱼公式。')}
+        ${caseCard('f-zero', '0 个', '转顶层，让左前角的黄色贴在<b>左边那一面</b>。做一次公式。')}
+        ${caseCard('f-two', '2 个', '一样：转顶层，让左前角的黄色贴在左边那一面。做一次公式。')}
+      </div>
+      ${tip('做完再看一次', '做完一次后再数一次，照规则再做。通常 1 到 3 次就会全黄。')}
+      <h2>观察练习</h2>
+      ${spot('fish', 6)}
+      ${practice(5)}
+    `,
+  },
+  {
+    key: 'learn-7', kicker: '第 6 步', title: '顶层角块：找车灯', goal: '让 4 个顶层角块都到正确的位置。', mins: 20, first: 'p-back', icon: 'p-back', stage: [6],
+    body: () => `
+      <h2>先观察：找车灯</h2>
+      <p>看顶层四周的<b>侧面</b>。如果某一面上，左右两个角的颜色一样，就像汽车的两个车灯。</p>
+      ${fig('p-back', '后面的两个角都是同一种颜色：这就是车灯。')}
+      ${tip('侦探时间', '要看侧面，不是看顶面！顶面都是黄色，没有线索。四边都看一遍：前、右、后、左。')}
+      <h2>车灯公式</h2>
+      ${algCard(A.aperm, '车灯公式', 'R\' F R\' ｜ B2 ｜ R F\' R\' ｜ B2 R2', '分 4 小段记：“下、前顺、下”，“后两下”，“上、前逆、下”，“后两下、右两下”。', 'p-back')}
+      <h2>照车灯做</h2>
+      <div class="cases three">
+        ${caseCard('p-back', '有车灯', '转顶层，把车灯放到<b>后面</b>（背对你）。做一次公式。')}
+        ${caseCard('p-side', '车灯在别的面', '先转顶层把车灯送到后面。如果四面都有车灯，就只要转顶层对齐。')}
+        ${caseCard('p-none', '没有车灯', '随便做一次公式，车灯就会出现。然后照“有车灯”再做一次。')}
+      </div>
+      ${rule('四面都有车灯', '每一面的两个角颜色都一样：角块已经对了！转顶层，让角块和中心颜色对齐，就可以进入最后一步。')}
+      <h2>观察练习</h2>
+      ${spot('lights', 6)}
+      ${practice(6)}
+    `,
+  },
+  {
+    key: 'learn-8', kicker: '第 7 步', title: '顶层棱块：完成！', goal: '把最后的棱块换到对的位置，还原整个魔术方块！', mins: 20, first: 'e-back', icon: 'solved', stage: [7],
+    body: () => `
+      <h2>先观察：哪一面已经完成？</h2>
+      <p>角块对好以后，看四周的侧面：有没有哪一面，顶层 3 格全部是同一种颜色？</p>
+      ${fig('e-back', '后面已经完成（3 格同色）。箭头是做完公式后，3 个棱块要去的地方。')}
+      <h2>棱块公式</h2>
+      ${algCard(A.ua, '棱块公式', '上右 · 上左 · 上左 · 上右 · 下右 · 上上', '6 拍念完：上右、上左、上左、上右、下右、上上（R2）。全部只用右手和顶层！', 'e-back')}
+      <h2>照情况做</h2>
+      <div class="cases three">
+        ${caseCard('e-back', '有一面完成', '转整个方块（y），把完成的那一面放到<b>后面</b>，做一次公式。')}
+        ${caseCard('e-other', '做完还不对', '方向反了也没关系。完成的面一样放后面，再做一次。')}
+        ${caseCard('e-none', '一面都没完成', '先做一次公式，就会出现完成的一面。然后放到后面再做。')}
+      </div>
+      <h2>观察练习</h2>
+      ${spot('bar', 6)}
+      ${practice(7)}
+      <div class="finale">
+        <div class="finale-pic">${isoSVG(Cube.solved(), { label: '还原好的魔术方块' })}</div>
+        <div><h2>恭喜你，会还原魔术方块了！</h2>
+        <p>7 个步骤全部学完。接下来：</p>
+        <div class="btnrow"><a class="btn" href="#follow">打乱后，跟着完整做一次</a><a class="btn ghost" href="#timer">用计时器记录成绩</a><a class="btn ghost" href="#speed">看 20 秒之路</a></div></div>
+      </div>
+    `,
+  },
+];
+/* ===== Pages, games, timer, router ===== */
+const App = { cleanup: [], players: [] };
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const main = () => document.getElementById('main');
+const onCleanup = f => App.cleanup.push(f);
+const isNarrow = () => window.matchMedia('(max-width: 900px)').matches;
+const fmt = ms => { if (ms == null) return '—'; const s = ms / 1000; if (s < 60) return s.toFixed(2); const m = Math.floor(s / 60); return m + ':' + (s - m * 60).toFixed(2).padStart(5, '0'); };
+const LESSON_BY_KEY = Object.fromEntries(LESSONS.map((l, i) => [l.key, { ...l, i }]));
+const done = () => Store.get('done', {});
+const pieceName = cols => {
+  const order = ['W', 'Y', 'R', 'O', 'B', 'G'];
+  const c = cols.slice().sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  return c.map(x => CN[x]).join('-') + (c.length === 3 ? ' 角块' : ' 棱块');
+};
+function makePlayer(host, o) { const p = new Player(host, o); App.players.push(p); onCleanup(() => p.destroy()); return p; }
+
+/* ---------- shared hydration for lesson-like pages ---------- */
+function hydrate(root, player, dock) {
+  $$('figure.dg[data-case]', root).forEach(f => { const pic = $('.dg-pic', f); if (pic && !pic.innerHTML) pic.innerHTML = caseFig(f.dataset.case); });
+  const toPlayer = (spec, src, autoplay) => {
+    player.load(spec);
+    if (isNarrow() && src) {
+      const anchor = src.closest('.case, .algcard, .practice, .movegrid, .xcase, .cross-ch') || src;
+      if (anchor.nextElementSibling !== dock) anchor.after(dock);
+      dock.classList.add('inline');
+      setTimeout(() => dock.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }), 30);
+    }
+    if (autoplay) setTimeout(() => player.play(), isNarrow() ? 650 : 350);
+  };
+  root.addEventListener('click', e => {
+    const d = e.target.closest('.demo[data-case]');
+    if (d) { toPlayer(caseSpec(d.dataset.case), d, true); return; }
+    const mc = e.target.closest('.movecard');
+    if (mc) {
+      const m = mc.dataset.move;
+      toPlayer({ state: Cube.solved(), moves: [m], segs: [{ name: m + ' · ' + shortOf(m), moves: [m] }], title: m + ' · ' + shortOf(m), sub: longOf(m), finishText: '转完了' }, mc, true);
+      return;
+    }
+    const pr = e.target.closest('[data-practice]');
+    if (pr) { toPlayer(practiceSpec(+pr.dataset.practice), pr, false); return; }
+  });
+  $$('.spotquiz', root).forEach(el => SpotQuiz(el, el.dataset.gen, +el.dataset.n || 5));
+  $$('.guessgame', root).forEach(el => GuessGame(el));
+}
+
+/* ---------- spot quiz ---------- */
+function SpotQuiz(host, gen, n) {
+  let i = 0, score = 0;
+  const ask = () => {
+    const Q = QUIZ[gen]();
+    let answered = false;
+    host.innerHTML = `<div class="sq"><div class="sq-top"><span>第 ${i + 1} / ${n} 题</span><span class="sq-score">${ICON.star}${score}</span></div>
+      <div class="sq-body"><div class="sq-fig">${Q.fig}</div><div class="sq-right"><p class="sq-q">${Q.q}</p>
+      <div class="opts">${Q.opts.map((o, j) => `<button type="button" class="opt" data-j="${j}">${o}</button>`).join('')}</div>
+      <div class="fb" aria-live="polite"></div></div></div></div>`;
+    $$('.opt', host).forEach(b => b.onclick = () => {
+      if (answered) return; answered = true;
+      const j = +b.dataset.j, ok = j === Q.ans;
+      if (ok) score++;
+      $$('.opt', host).forEach(x => { x.disabled = true; if (+x.dataset.j === Q.ans) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      $('.fb', host).innerHTML = `<div class="fb-box ${ok ? 'ok' : 'no'}">${ok ? ICON.check : ICON.retry}<div><b>${ok ? '答对了' : '再想想'}</b><p>${Q.why}</p></div></div>
+        <button type="button" class="btn small next">${i + 1 < n ? '下一题' : '看成绩'}</button>`;
+      $('.next', host).onclick = () => { i++; i < n ? ask() : finish(); };
+      $('.sq-score', host).innerHTML = ICON.star + score;
+    });
+  };
+  const finish = () => {
+    host.innerHTML = `<div class="sq sq-end"><div class="sq-big">${score} / ${n}</div><p>${score === n ? '全部答对！你的眼睛很厉害。' : score >= n * .6 ? '很不错！错的那几题，再看一次说明就会了。' : '多练几次，这些图形会越看越熟。'}</p>
+      <button type="button" class="btn small again">${ICON.restart}<span>再来一组</span></button></div>`;
+    $('.again', host).onclick = () => { i = 0; score = 0; ask(); };
+  };
+  ask();
+}
+
+/* ---------- guess the move (lesson 1) ---------- */
+function GuessGame(host) {
+  const POOL = ['R', "R'", 'L', "L'", 'U', "U'", 'D', "D'", 'F', "F'"];
+  let round = 0, score = 0, cur = null, answered = false;
+  host.innerHTML = `<div class="gg"><div class="gg-cube"></div><div class="gg-side">
+     <div class="sq-top"><span class="gg-round"></span><span class="sq-score">${ICON.star}0</span></div>
+     <p class="sq-q">方块刚刚转了哪一下？</p><div class="opts gg-opts"></div><div class="fb" aria-live="polite"></div>
+     <button type="button" class="btn ghost small gg-again">${ICON.restart}<span>再看一次</span></button></div></div>`;
+  const view = new CubeView($('.gg-cube', host), { dur: 650 });
+  onCleanup(() => view.destroy());
+  const show = async () => { view.setState(Cube.solved()); await sleep(450); await view.turn(cur, 650); };
+  const next = () => {
+    if (round >= 8) {
+      $('.gg-side', host).innerHTML = `<div class="sq-end"><div class="sq-big">${score} / 8</div><p>${score >= 7 ? '字母已经难不倒你了！' : '多看几次箭头卡片，再来挑战。'}</p><button type="button" class="btn small gg-restart">${ICON.restart}<span>再玩一次</span></button></div>`;
+      const best = Store.get('guess-best', 0); if (score > best) Store.set('guess-best', score);
+      $('.gg-restart', host).onclick = () => { GuessGame(host); };
+      return;
+    }
+    round++; answered = false;
+    cur = pick(POOL);
+    const inv = Cube.invMove(cur);
+    const others = shuffle(POOL.filter(x => x !== cur && x !== inv)).slice(0, 2);
+    const opts = shuffle([cur, inv, ...others]);
+    $('.gg-round', host).textContent = `第 ${round} / 8 题`;
+    $('.gg-opts', host).innerHTML = opts.map(m => `<button type="button" class="opt mvopt" data-m="${m}"><b>${m}</b><small>${shortOf(m)}</small></button>`).join('');
+    $('.fb', host).innerHTML = '';
+    $$('.mvopt', host).forEach(b => b.onclick = () => {
+      if (answered) return; answered = true;
+      const ok = b.dataset.m === cur; if (ok) score++;
+      $$('.mvopt', host).forEach(x => { x.disabled = true; if (x.dataset.m === cur) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      $('.sq-score', host).innerHTML = ICON.star + score;
+      $('.fb', host).innerHTML = `<div class="fb-box ${ok ? 'ok' : 'no'}">${ok ? ICON.check : ICON.retry}<div><b>${ok ? '答对了' : '再想想'}</b><p>刚才是 ${cur}：${longOf(cur)}。</p></div></div><button type="button" class="btn small gg-next">下一题</button>`;
+      $('.gg-next', host).onclick = next;
+    });
+    show();
+  };
+  $('.gg-again', host).onclick = () => cur && show();
+  next();
+}
+
+/* ---------- header / nav ---------- */
+const NAV = [['home', '闯关地图'], ['camp', '观察训练营'], ['follow', '跟我还原'], ['play', '练习台'], ['timer', '计时器'], ['speed', '20秒之路'], ['cards', '口诀卡']];
+
+/* ---------- home ---------- */
+function pageHome() {
+  const d = done();
+  const nDone = LESSONS.filter(l => d[l.key]).length;
+  main().innerHTML = `
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow">给小学生的魔术方块课</p>
+      <h1>从零开始，<br>学会还原魔术方块</h1>
+      <p class="lead">7 个步骤、7 个公式就能还原。再练眼力和手指，一步一步冲向 20 秒。</p>
+      <div class="btnrow"><a class="btn" href="#${LESSONS.find(l => !d[l.key])?.key || 'learn-0'}">${nDone ? '继续闯关' : '开始第一课'}</a><button type="button" class="btn ghost" id="heroGo">${ICON.shuffle}<span>打乱，看它自己还原</span></button></div>
+      <div class="progress"><div class="progress-bar"><i style="width:${nDone / LESSONS.length * 100}%"></i></div><span>已完成 ${nDone} / ${LESSONS.length} 关</span></div>
+    </div>
+    <div class="hero-cube"><div id="heroCube"></div><div class="hero-cap" id="heroCap" aria-live="polite">拖动方块转着看。点“打乱”试试！</div></div>
+  </section>
+  <section>
+    <div class="sec-head"><h2>闯关地图</h2><p>按顺序一关一关来。学会了，就在那一关最下面点“我学会了”，拿一颗星。</p></div>
+    <div class="map">${LESSONS.map((l, i) => `
+      <a class="lv${d[l.key] ? ' done' : ''}" href="#${l.key}">
+        <span class="lv-pic">${caseFig(l.icon)}</span>
+        <span class="lv-txt"><span class="lv-k">${l.kicker}${d[l.key] ? `<i class="lv-star">${ICON.star}</i>` : ''}</span><b>${l.title}</b><small>${l.goal}</small><span class="lv-min">约 ${l.mins} 分钟</span></span>
+      </a>`).join('')}</div>
+  </section>
+  <section class="duo">
+    <a class="feature" href="#camp"><span class="feature-pic">${topSVG(caseState('p-back'), { labels: false })}</span><span><b>观察训练营</b><p>5 个小游戏：认颜色、闪眼记忆、找小块、认图形、预测。高手快，是因为眼睛快。</p></span></a>
+    <a class="feature" href="#follow"><span class="feature-pic">${isoSVG(Cube.apply(Cube.solved(), "R U F' L2 D B'"), { label: '打乱的方块' })}</span><span><b>跟我还原</b><p>照着打乱，或者把你方块的颜色填进来，再一步一步跟着还原。</p></span></a>
+  </section>
+  <section>
+    <div class="sec-head"><h2>20 秒之路</h2><p>学会以后，照这条路线练。每一站都有目标时间。</p></div>
+    <ol class="road">${ROAD.map((r, i) => `<li><span class="road-t">${r.t}</span><b>${r.name}</b><small>${r.what}</small></li>`).join('')}</ol>
+    <a class="btn ghost" href="#speed">看完整路线和进阶公式</a>
+  </section>`;
+  const view = new CubeView($('#heroCube'), { dur: 110 });
+  onCleanup(() => view.destroy());
+  let busy = false, stop = false;
+  onCleanup(() => { stop = true; });
+  let auto = true, ang = view.ry;
+  view.onUserRotate = () => { auto = false; };
+  const spin = () => { if (stop) return; if (auto && !reduceMotion()) { ang += 0.12; view.ry = ang; view.applyView(); } requestAnimationFrame(spin); };
+  requestAnimationFrame(spin);
+  const cap = $('#heroCap'), btn = $('#heroGo');
+  btn.onclick = async () => {
+    if (busy) return; busy = true; btn.disabled = true;
+    const sc = Cube.randomScramble(20);
+    cap.textContent = '打乱中：' + sc.join(' ');
+    for (const m of sc) { if (stop) return; await view.turn(m, 90); }
+    await sleep(500);
+    const r = Cube.solveBeginner(view.state);
+    const total = r.parts.reduce((a, p) => a + p.moves.length, 0);
+    let k = 0;
+    for (let si = 0; si < r.parts.length; si++) {
+      const p = r.parts[si];
+      for (const m of p.moves) {
+        if (stop) return;
+        k++;
+        cap.textContent = `${STAGE_TITLE[si]} · 第 ${k} / ${total} 步`;
+        await view.turn(m, /^[xyz]/.test(m) ? 220 : 105);
+      }
+      if (p.moves.length) await sleep(250);
+    }
+    cap.textContent = `还原好了！用新手方法一共转了 ${total} 下。学会以后，你也可以。`;
+    busy = false; btn.disabled = false;
+  };
+}
+const ROAD = [
+  { t: '3 分钟', name: '学会', what: '不看提示，自己还原一次。' },
+  { t: '1 分 30', name: '熟练', what: '公式变成手指的记忆，学指法。' },
+  { t: '1 分钟', name: '底十字', what: '不用小雏菊，直接在底部做十字。' },
+  { t: '45 秒', name: 'F2L 入门', what: '角块和棱块配成一对，一起放。' },
+  { t: '30 秒', name: '两步顶层', what: '顶层分 4 步，学 16 个公式。' },
+  { t: '20 秒', name: '预判', what: '手在转，眼睛已经在找下一块。' },
+];
+
+/* ---------- lesson page ---------- */
+function pageLesson(L) {
+  const d = done();
+  const prev = LESSONS[L.i - 1], next = LESSONS[L.i + 1];
+  main().innerHTML = `
+  <div class="lesson">
+    <header class="lesson-head">
+      <nav class="crumbs" aria-label="位置"><a href="#home">闯关地图</a><span>/</span><span>${L.kicker}</span></nav>
+      <p class="eyebrow">${L.kicker} · 约 ${L.mins} 分钟</p>
+      <h1>${L.title}</h1>
+      <p class="goal"><b>学完你会：</b>${L.goal}</p>
+    </header>
+    <div class="lesson-main prose">${L.body()}
+      <div class="lesson-end">
+        <button type="button" class="btn ${d[L.key] ? 'ghost' : ''}" id="doneBtn">${ICON.star}<span>${d[L.key] ? '已经学会（点一下取消）' : '我学会了这一关'}</span></button>
+        <div class="pn">${prev ? `<a class="pn-a" href="#${prev.key}"><small>上一关</small><b>${prev.title}</b></a>` : '<span></span>'}${next ? `<a class="pn-a nx" href="#${next.key}"><small>下一关</small><b>${next.title}</b></a>` : `<a class="pn-a nx" href="#camp"><small>接下来</small><b>观察训练营</b></a>`}</div>
+      </div>
+    </div>
+    <aside class="lesson-side"><div class="dock" id="dock"><div id="player"></div></div></aside>
+  </div>`;
+  const dock = $('#dock');
+  const player = makePlayer($('#player'), {});
+  player.load(caseSpec(L.first));
+  hydrate($('.lesson-main'), player, dock);
+  const side = $('.lesson-side');
+  const mq = window.matchMedia('(max-width: 900px)');
+  const back = () => { if (!mq.matches && dock.parentElement !== side) { side.appendChild(dock); dock.classList.remove('inline'); } };
+  mq.addEventListener('change', back); onCleanup(() => mq.removeEventListener('change', back));
+  $('#doneBtn').onclick = () => {
+    const dd = done(); dd[L.key] = !dd[L.key]; Store.set('done', dd);
+    const b = $('#doneBtn'); b.classList.toggle('ghost', dd[L.key]);
+    b.innerHTML = `${ICON.star}<span>${dd[L.key] ? '已经学会（点一下取消）' : '我学会了这一关'}</span>`;
+    if (dd[L.key]) toast('拿到一颗星！' + (next ? '下一关：' + next.title : ''));
+  };
+  bindPlayerKeys(player);
+}
+function bindPlayerKeys(player) {
+  const k = e => {
+    if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); player.pause(); player.fwd(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); player.pause(); player.back(); }
+  };
+  document.addEventListener('keydown', k); onCleanup(() => document.removeEventListener('keydown', k));
+}
+
+/* ---------- observation camp ---------- */
+const GAMES = [
+  { key: 'game-colors', title: '颜色好朋友', skill: '颜色地图', desc: '对面是什么颜色？黄上绿前时，右边是什么？记熟颜色地图，找块就不用猜。', pic: () => `<span class="pair-dots big">${colorDots(['W', 'Y', 'R', 'O', 'B', 'G'])}</span>` },
+  { key: 'game-flash', title: '闪眼记忆', skill: '一眼看全', desc: '一个面只给你看 2 秒，凭记忆把 9 格颜色涂回去。', pic: () => stickerGridSVG(['R', 'Y', 'G', 'G', 'W', 'O', 'B', 'R', 'Y']) },
+  { key: 'game-find', title: '找小块', skill: '找块速度', desc: '在打乱的 3D 方块上，转着找到指定的小块，点它一下。', pic: () => isoSVG(Cube.apply(Cube.solved(), "R U' F2 L"), { hl: new Set(Cube.POSMAP['1,1,1'].slots) }) },
+  { key: 'game-shape', title: '图形侦探', skill: '认图形', desc: '看一眼顶面，马上说出：是一字还是 L？有没有小鱼？车灯在哪？', pic: () => topSVG(caseState('y-L'), { labels: false }) },
+  { key: 'game-predict', title: '预测高手', skill: '预判', desc: '转一下之后，星星会跑到哪一格？先在脑子里转，再看答案。', pic: () => isoSVG(Cube.solved(), { move: 'R', marks: { [Cube.slotAt([1, -1, 1], Cube.N.F)]: '★' } }) },
+];
+function pageCamp() {
+  const best = Store.get('best', {});
+  main().innerHTML = `
+  <header class="page-head"><p class="eyebrow">观察训练营</p><h1>眼睛快，手才快</h1>
+  <p class="lead">20 秒还原的高手，手其实没有比你快很多。他们快在<b>眼睛</b>：一边转，一边已经找到下一块，所以从来不停下来。每天玩一两个游戏，练出侦探的眼睛。</p></header>
+  <div class="games">${GAMES.map(g => `<a class="game" href="#${g.key}"><span class="game-pic">${g.pic()}</span><span class="game-txt"><span class="eyebrow">练：${g.skill}</span><b>${g.title}</b><small>${g.desc}</small><span class="game-best">${best[g.key] ? '最好成绩：' + best[g.key] : '还没有成绩'}</span></span></a>`).join('')}</div>
+  <section class="prose narrow">
+    <h2>每一步都在练观察</h2>
+    <p>学每一步时，先<b>看</b>再<b>转</b>：</p>
+    <ul class="checks">
+      <li>白十字：先找齐 4 个白色棱块，再动手。</li>
+      <li>白色角块：先看白色朝哪边，就知道要做 1、3 还是 5 次。</li>
+      <li>第二层：先找没有黄色的棱块。</li>
+      <li>黄十字和黄色面：先认形状、数角块。</li>
+      <li>最后两步：先找车灯、找完成的一面。</li>
+    </ul>
+    ${tip('高手的习惯', '比赛开始前有 15 秒观察时间，可以拿起来看，但不能转。用这 15 秒把白十字的做法想好，就能一口气做完。在计时器里打开“15 秒观察”来练。')}
+  </section>`;
+}
+function setBest(key, label, better) {
+  const b = Store.get('best', {}); const raw = Store.get('bestRaw', {});
+  if (raw[key] == null || better(raw[key])) { raw[key] = better.value; b[key] = label; Store.set('best', b); Store.set('bestRaw', raw); return true; }
+  return false;
+}
+function gameShell(g, intro, inner) {
+  return `<header class="page-head"><nav class="crumbs" aria-label="位置"><a href="#camp">观察训练营</a><span>/</span><span>${g.title}</span></nav>
+  <p class="eyebrow">练：${g.skill}</p><h1>${g.title}</h1><p class="lead">${intro}</p></header><div class="game-area">${inner}</div>`;
+}
+const G = key => GAMES.find(g => g.key === key);
+
+/* game: colors */
+function pageGameColors() {
+  const g = G('game-colors');
+  main().innerHTML = gameShell(g, '10 题。前几题问“对面”，后面问“右边是什么颜色”。越快越好，但先求答对。', `<div class="card gbox" id="gc"></div>`);
+  const box = $('#gc');
+  let i = 0, score = 0, t0 = 0, timer;
+  const OPP = { W: 'Y', Y: 'W', R: 'O', O: 'R', B: 'G', G: 'B' };
+  const startScreen = () => {
+    box.innerHTML = `<div class="gstart"><p>准备好了吗？按开始后计时。</p><button type="button" class="btn" id="go">${ICON.play}<span>开始</span></button></div>`;
+    $('#go').onclick = () => { i = 0; score = 0; t0 = performance.now(); ask(); };
+  };
+  const ask = () => {
+    let Q;
+    if (i < 4) {
+      const c = pick(Object.keys(OPP)); const o = OPP[c];
+      const opts = shuffle([o, ...shuffle(Object.keys(OPP).filter(x => x !== c && x !== o)).slice(0, 3)]);
+      Q = { fig: `<div class="swatch-big" style="background:${HEX[c]}"></div>`, q: `${CN[c]}色的对面是什么颜色？`, opts, ans: o, why: `${CN[c]}和${CN[o]}是一对，永远在对面。` };
+    } else {
+      const s = rot24();
+      const u = Cube.center(s, 'U'), f = Cube.center(s, 'F'), r = Cube.center(s, 'R');
+      const shown = Cube.solved().map(() => 'X');
+      shown[4] = u; shown[22] = f;
+      const opts = shuffle([r, OPP[r], OPP[u], OPP[f]]);
+      Q = {
+        fig: isoSVG(shown, { marks: { 13: '?' }, label: '只看得到上面和前面的中心' }), q: `${CN[u]}色朝上，${CN[f]}色朝前。右边的中心是什么颜色？`, opts, ans: r,
+        why: `右边是${CN[r]}色。${CN[OPP[r]]}色在左边，${CN[OPP[u]]}色在底下，${CN[OPP[f]]}色在后面。`,
+      };
+    }
+    let answered = false;
+    box.innerHTML = `<div class="sq"><div class="sq-top"><span>第 ${i + 1} / 10 题</span><span class="clock" id="clk">0.0 秒</span></div>
+      <div class="sq-body"><div class="sq-fig">${Q.fig}</div><div class="sq-right"><p class="sq-q">${Q.q}</p>
+      <div class="opts">${Q.opts.map(c => `<button type="button" class="opt colopt" data-c="${c}"><i class="dot" style="background:${HEX[c]}"></i>${CN[c]}色</button>`).join('')}</div><div class="fb" aria-live="polite"></div></div></div></div>`;
+    clearInterval(timer); timer = setInterval(() => { const c = $('#clk'); if (c) c.textContent = ((performance.now() - t0) / 1000).toFixed(1) + ' 秒'; }, 100);
+    $$('.colopt', box).forEach(b => b.onclick = () => {
+      if (answered) return; answered = true;
+      const ok = b.dataset.c === Q.ans; if (ok) score++;
+      $$('.colopt', box).forEach(x => { x.disabled = true; if (x.dataset.c === Q.ans) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      $('.fb', box).innerHTML = `<div class="fb-box ${ok ? 'ok' : 'no'}">${ok ? ICON.check : ICON.retry}<div><b>${ok ? '答对了' : '再想想'}</b><p>${Q.why}</p></div></div>`;
+      setTimeout(() => { i++; i < 10 ? ask() : end(); }, ok ? 700 : 2000);
+    });
+  };
+  const end = () => {
+    clearInterval(timer);
+    const sec = (performance.now() - t0) / 1000;
+    const newBest = score === 10 && setBest(g.key, sec.toFixed(1) + ' 秒（10 题全对）', Object.assign(v => sec < v, { value: sec }));
+    box.innerHTML = `<div class="sq-end"><div class="sq-big">${score} / 10</div><p>用时 ${sec.toFixed(1)} 秒。${newBest ? '新纪录！' : score === 10 ? '全部答对！' : '10 题全对才会记录成绩。'}</p>
+    <p class="muted">小秘诀：记住“黄上绿前，右边是橙”。其他方向，都可以从这一句推出来。</p>
+    <button type="button" class="btn" id="again">${ICON.restart}<span>再玩一次</span></button></div>`;
+    $('#again').onclick = () => { i = 0; score = 0; t0 = performance.now(); ask(); };
+  };
+  onCleanup(() => clearInterval(timer));
+  startScreen();
+}
+
+/* game: flash memory */
+function pageGameFlash() {
+  const g = G('game-flash');
+  const LV = [{ n: 1, cols: 2, t: 3000, name: '1 级：2 种颜色，看 3 秒' }, { n: 2, cols: 3, t: 2500, name: '2 级：3 种颜色，看 2.5 秒' }, { n: 3, cols: 4, t: 2000, name: '3 级：4 种颜色，看 2 秒' }, { n: 4, cols: 6, t: 1500, name: '4 级：6 种颜色，看 1.5 秒' }];
+  main().innerHTML = gameShell(g, '一个面会出现一下下就消失。记住 9 格的颜色，再用颜色笔涂回去。每级 5 回合。', `<div class="card gbox" id="gf"></div>`);
+  const box = $('#gf');
+  let lv, round, total, cells, answer, brush, timers = [];
+  onCleanup(() => timers.forEach(clearTimeout));
+  const menu = () => {
+    box.innerHTML = `<div class="gstart"><p>选一个等级：</p><div class="lvbtns">${LV.map((l, i) => `<button type="button" class="opt" data-l="${i}">${l.name}</button>`).join('')}</div>
+      ${tip('怎么记最快？', '不要一格一格记。先看哪种颜色最多，再记“形状”：例如“红色是一个 L 形，中间是黄色”。')}</div>`;
+    $$('[data-l]', box).forEach(b => b.onclick = () => { lv = LV[+b.dataset.l]; round = 0; total = 0; play(); });
+  };
+  const play = () => {
+    round++;
+    const palette = shuffle(['W', 'Y', 'R', 'O', 'B', 'G']).slice(0, lv.cols);
+    answer = Array.from({ length: 9 }, () => pick(palette));
+    palette.forEach((c, i) => { if (!answer.includes(c)) answer[Math.floor(Math.random() * 9)] = c; });
+    cells = Array(9).fill(null); brush = palette[0];
+    box.innerHTML = `<div class="flash"><div class="sq-top"><span>${lv.name} · 第 ${round} / 5 回合</span><span>答对 ${total} 格</span></div>
+      <div class="flash-show">${stickerGridSVG(answer, { label: '要记住的面' })}<div class="bar"><i id="fbar"></i></div><p>记住它！</p></div></div>`;
+    const bar = $('#fbar'); bar.style.transition = `width ${lv.t}ms linear`;
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = '0%'; }));
+    timers.push(setTimeout(() => paint(palette), lv.t));
+  };
+  const paint = palette => {
+    box.innerHTML = `<div class="flash"><div class="sq-top"><span>${lv.name} · 第 ${round} / 5 回合</span><span>答对 ${total} 格</span></div>
+      <div class="flash-paint"><div class="paintgrid" role="grid" aria-label="点格子涂颜色">${cells.map((c, i) => `<button type="button" class="pcell" data-i="${i}" aria-label="第 ${i + 1} 格"></button>`).join('')}</div>
+      <div><p>先选颜色，再点格子：</p><div class="palette">${palette.map(c => `<button type="button" class="pal${c === brush ? ' on' : ''}" data-c="${c}" style="--c:${HEX[c]}" aria-label="${CN[c]}色">${CN[c]}</button>`).join('')}</div>
+      <button type="button" class="btn" id="check">${ICON.check}<span>检查</span></button></div></div></div>`;
+    $$('.pal', box).forEach(b => b.onclick = () => { brush = b.dataset.c; $$('.pal', box).forEach(x => x.classList.toggle('on', x === b)); });
+    $$('.pcell', box).forEach(b => b.onclick = () => { const i = +b.dataset.i; cells[i] = brush; b.style.background = HEX[brush]; b.classList.add('filled'); });
+    $('#check').onclick = () => {
+      const right = cells.filter((c, i) => c === answer[i]).length; total += right;
+      box.innerHTML = `<div class="flash"><div class="sq-top"><span>${lv.name} · 第 ${round} / 5 回合</span><span>答对 ${total} 格</span></div>
+       <div class="flash-cmp"><figure>${stickerGridSVG(cells.map(c => c || ''), { label: '你涂的' })}<figcaption>你涂的</figcaption></figure><figure>${stickerGridSVG(answer, { label: '原来的' })}<figcaption>原来的</figcaption></figure></div>
+       <div class="fb-box ${right === 9 ? 'ok' : 'no'}">${right === 9 ? ICON.check : ICON.retry}<div><b>${right} / 9 格一样</b><p>${right === 9 ? '一格都没错！' : '对照一下两张图，看看是哪几格不一样。'}</p></div></div>
+       <button type="button" class="btn" id="nx">${round < 5 ? '下一回合' : '看总成绩'}</button></div>`;
+      $('#nx').onclick = () => round < 5 ? play() : end();
+    };
+  };
+  const end = () => {
+    const nb = setBest(g.key, `${lv.n} 级 ${total}/45 格`, Object.assign(v => lv.n * 100 + total > v, { value: lv.n * 100 + total }));
+    box.innerHTML = `<div class="sq-end"><div class="sq-big">${total} / 45</div><p>${nb ? '新纪录！' : ''}${total >= 40 ? '眼力很好，可以挑战下一级。' : '再练几次，试着用“记形状”的方法。'}</p><button type="button" class="btn" id="mn">${ICON.restart}<span>再玩一次</span></button></div>`;
+    $('#mn').onclick = menu;
+  };
+  menu();
+}
+
+/* game: find the piece */
+function pageGameFind() {
+  const g = G('game-find');
+  main().innerHTML = gameShell(g, '方块已经打乱。看上面要找的小块，拖动方块转着找，找到了就点它的任何一格。一共 8 块。', `
+    <div class="find card"><div class="find-cube" id="fc"></div><div class="find-side" id="fs"></div></div>`);
+  const fs = $('#fs');
+  let view, targets, i, t0, misses, timer, busy = false;
+  const start = () => {
+    const st = Cube.apply(Cube.solved(), Cube.randomScramble(25));
+    if (!view) { view = new CubeView($('#fc'), { state: st, onSticker: tap }); onCleanup(() => view.destroy()); } else { view.setState(st); view.setHighlight(null); }
+    const pieces = shuffle(Cube.POS.filter(o => o.slots.length > 1));
+    targets = [...pieces.filter(o => o.slots.length === 2).slice(0, 4), ...pieces.filter(o => o.slots.length === 3).slice(0, 4)].map(o => o.slots.map(k => Cube.solved()[k]));
+    targets = shuffle(targets); i = 0; misses = 0; t0 = performance.now();
+    clearInterval(timer); timer = setInterval(() => { const c = $('#fclk'); if (c) c.textContent = ((performance.now() - t0) / 1000).toFixed(1) + ' 秒'; }, 100);
+    show();
+  };
+  const show = (msg) => {
+    const t = targets[i];
+    fs.innerHTML = `<div class="sq-top"><span>第 ${i + 1} / 8 块</span><span class="clock" id="fclk"></span></div>
+      <p class="muted">要找：</p><div class="target">${colorDots(t)}<b>${pieceName(t)}</b></div>
+      <p class="muted small">${t.length === 3 ? '角块有 3 种颜色，在三个面碰在一起的角上。' : '棱块有 2 种颜色，在两个面中间。'}</p>
+      <div class="fb" aria-live="polite">${msg || ''}</div>
+      <button type="button" class="btn ghost small" id="hint">${ICON.bulb}<span>提示</span></button>`;
+    $('#hint').onclick = () => {
+      const o = Cube.findPiece(view.state, t);
+      const where = []; const p = o.p;
+      if (p[1] === 1) where.push('上面'); if (p[1] === -1) where.push('底面');
+      if (p[0] === 1) where.push('右面'); if (p[0] === -1) where.push('左面');
+      if (p[2] === 1) where.push('前面'); if (p[2] === -1) where.push('后面');
+      $('.fb', fs).innerHTML = `<div class="fb-box no">${ICON.bulb}<div><b>提示</b><p>它在${where.join('和')}交界的地方。（以黄色中心为上、绿色中心为前）</p></div></div>`;
+      misses++;
+    };
+  };
+  function tap(slot) {
+    if (busy || !targets || i >= 8) return;
+    const t = targets[i];
+    const o = Cube.findPiece(view.state, t);
+    if (o.slots.includes(slot)) {
+      busy = true;
+      view.setHighlight(new Set(o.slots));
+      $('.fb', fs).innerHTML = `<div class="fb-box ok">${ICON.check}<div><b>找到了！</b><p>${pieceName(t)}</p></div></div>`;
+      setTimeout(() => { view.setHighlight(null); busy = false; i++; i < 8 ? show() : end(); }, 750);
+    } else {
+      misses++;
+      const P = Cube.POS.find(x => x.slots.includes(slot));
+      const cols = P.slots.map(k => view.state[k]);
+      const what = P.slots.length === 1 ? `${CN[cols[0]]}色中心块` : pieceName(cols);
+      $('.fb', fs).innerHTML = `<div class="fb-box no">${ICON.retry}<div><b>再找找</b><p>这一块是“${what}”。要找的是“${pieceName(t)}”。</p></div></div>`;
+    }
+  }
+  const end = () => {
+    clearInterval(timer);
+    const sec = (performance.now() - t0) / 1000;
+    const nb = setBest(g.key, sec.toFixed(1) + ' 秒', Object.assign(v => sec < v, { value: sec }));
+    fs.innerHTML = `<div class="sq-end"><div class="sq-big">${sec.toFixed(1)} 秒</div><p>找齐 8 块，点错或用提示 ${misses} 次。${nb ? '新纪录！' : ''}</p>
+      <p class="muted small">秘诀：先想好这一块的颜色在哪几个面中间（看中心！），再去那里找。</p><button type="button" class="btn" id="ag">${ICON.restart}<span>再玩一次</span></button></div>`;
+    $('#ag').onclick = start;
+  };
+  onCleanup(() => clearInterval(timer));
+  fs.innerHTML = `<div class="gstart"><p>准备好了就开始，计时会马上开始。</p><button type="button" class="btn" id="go">${ICON.play}<span>开始</span></button></div>`;
+  view = new CubeView($('#fc'), { onSticker: tap }); onCleanup(() => view.destroy());
+  $('#go').onclick = start;
+}
+
+/* game: shape detective */
+function pageGameShape() {
+  const g = G('game-shape');
+  main().innerHTML = gameShell(g, '12 张顶面图，越快认出越好。题目有 4 种：黄十字形状、黄色角块数量、车灯在哪、哪一面完成。', `<div class="card gbox" id="gs"></div>`);
+  const box = $('#gs');
+  let i, score, t0, timer;
+  const gens = ['shape', 'fish', 'lights', 'bar'];
+  const start = () => { i = 0; score = 0; t0 = performance.now(); clearInterval(timer); timer = setInterval(() => { const c = $('#sclk'); if (c) c.textContent = ((performance.now() - t0) / 1000).toFixed(1) + ' 秒'; }, 100); ask(); };
+  const ask = () => {
+    const Q = QUIZ[gens[i % 4]]();
+    let answered = false;
+    box.innerHTML = `<div class="sq"><div class="sq-top"><span>第 ${i + 1} / 12 张</span><span class="clock" id="sclk"></span></div>
+      <div class="sq-body"><div class="sq-fig">${Q.fig}</div><div class="sq-right"><p class="sq-q">${Q.q}</p>
+      <div class="opts">${Q.opts.map((o, j) => `<button type="button" class="opt" data-j="${j}">${o}</button>`).join('')}</div><div class="fb" aria-live="polite"></div></div></div></div>`;
+    $$('.opt', box).forEach(b => b.onclick = () => {
+      if (answered) return; answered = true;
+      const ok = +b.dataset.j === Q.ans; if (ok) score++;
+      $$('.opt', box).forEach(x => { x.disabled = true; if (+x.dataset.j === Q.ans) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      $('.fb', box).innerHTML = `<div class="fb-box ${ok ? 'ok' : 'no'}">${ok ? ICON.check : ICON.retry}<div><b>${ok ? '答对了' : '再想想'}</b><p>${Q.why}</p></div></div>`;
+      setTimeout(() => { i++; i < 12 ? ask() : end(); }, ok ? 650 : 2300);
+    });
+  };
+  const end = () => {
+    clearInterval(timer);
+    const sec = (performance.now() - t0) / 1000;
+    const nb = score === 12 && setBest(g.key, sec.toFixed(1) + ' 秒（全对）', Object.assign(v => sec < v, { value: sec }));
+    box.innerHTML = `<div class="sq-end"><div class="sq-big">${score} / 12</div><p>用时 ${sec.toFixed(1)} 秒。${nb ? '新纪录！' : score === 12 ? '全部答对！' : '12 张全对才记录成绩。'}</p><button type="button" class="btn" id="ag">${ICON.restart}<span>再玩一次</span></button></div>`;
+    $('#ag').onclick = start;
+  };
+  onCleanup(() => clearInterval(timer));
+  box.innerHTML = `<div class="gstart"><p>认得越快，还原时停下来的时间就越少。</p><button type="button" class="btn" id="go">${ICON.play}<span>开始</span></button></div>`;
+  $('#go').onclick = start;
+}
+
+/* game: predict */
+function pageGamePredict() {
+  const g = G('game-predict');
+  main().innerHTML = gameShell(g, '图上有一颗星星 ★。照着转一下（或两下）之后，星星会跑到哪一格？选 A、B、C 或 D。', `<div class="card gbox" id="gp"></div>`);
+  const box = $('#gp');
+  const VIS = k => ['U', 'F', 'R'].includes(Cube.SLOTS[k].f);
+  let lvl = 1, i, score;
+  const FACE_CN = { U: '上面', F: '前面', R: '右面', D: '底面', L: '左面', B: '后面' };
+  const make = () => {
+    const pool = ['R', "R'", 'U', "U'", 'F', "F'", 'L', "L'", 'D', "D'"];
+    for (let t = 0; t < 200; t++) {
+      const ms = lvl === 1 ? [pick(pool)] : [pick(pool), pick(pool)];
+      if (ms.length === 2 && ms[0][0] === ms[1][0]) continue;
+      const ids = Array.from({ length: 54 }, (_, k) => k);
+      const after = Cube.apply(ids, ms);
+      const k = pick(Array.from({ length: 54 }, (_, q) => q).filter(q => VIS(q) && q % 9 !== 4));
+      const dest = after.indexOf(k);
+      if (dest === k || !VIS(dest)) continue;
+      const near = Array.from({ length: 54 }, (_, q) => q).filter(q => VIS(q) && q !== k && q !== dest && q % 9 !== 4);
+      const sameFace = near.filter(q => Cube.SLOTS[q].f === Cube.SLOTS[dest].f);
+      const ds = shuffle(sameFace).slice(0, 2);
+      const rest = shuffle(near.filter(q => !ds.includes(q))).slice(0, 3 - ds.length);
+      const choices = shuffle([dest, ...ds, ...rest]);
+      return { ms, k, dest, choices };
+    }
+  };
+  const start = () => { i = 0; score = 0; ask(); };
+  const ask = () => {
+    const P = make();
+    const s = Cube.solved();
+    const marks = { [P.k]: '★' }; P.choices.forEach((c, j) => marks[c] = 'ABCD'[j]);
+    let answered = false;
+    box.innerHTML = `<div class="sq"><div class="sq-top"><span>${lvl === 1 ? '1 级：转一下' : '2 级：连转两下'} · 第 ${i + 1} / 10 题</span><span class="sq-score">${ICON.star}${score}</span></div>
+      <div class="sq-body"><div class="sq-fig">${isoSVG(s, { marks, move: P.ms.length === 1 ? P.ms[0] : null, label: '有星星和 ABCD 的方块' })}</div>
+      <div class="sq-right"><p class="sq-q">照着转：</p>${algChips(P.ms.join(' '))}<p class="sq-q">★ 会跑到哪一格？</p>
+      <div class="opts four">${'ABCD'.split('').map((l, j) => `<button type="button" class="opt" data-j="${j}">${l}</button>`).join('')}</div><div class="fb" aria-live="polite"></div></div></div></div>`;
+    $$('.opt', box).forEach(b => b.onclick = () => {
+      if (answered) return; answered = true;
+      const j = +b.dataset.j, ok = P.choices[j] === P.dest; if (ok) score++;
+      const aj = P.choices.indexOf(P.dest);
+      $$('.opt', box).forEach(x => { x.disabled = true; if (+x.dataset.j === aj) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      const fromF = Cube.SLOTS[P.k].f, toF = Cube.SLOTS[P.dest].f;
+      $('.fb', box).innerHTML = `<div class="fb-box ${ok ? 'ok' : 'no'}">${ok ? ICON.check : ICON.retry}<div><b>${ok ? '答对了' : '再想想'}：答案是 ${'ABCD'[aj]}</b><p>★ 跟着转动的那一层走，从${FACE_CN[fromF]}${fromF === toF ? '换了一个位置，还在' + FACE_CN[toF] : '跑到了' + FACE_CN[toF]}。</p></div></div>
+        <div class="after"><span class="muted small">转完以后：</span>${isoSVG(Cube.apply(s, P.ms), { marks: { [P.dest]: '★' }, label: '转完以后' })}</div>
+        <button type="button" class="btn small" id="nx">${i < 9 ? '下一题' : '看成绩'}</button>`;
+      $('#nx').onclick = () => { i++; i < 10 ? ask() : end(); };
+      $('.sq-score', box).innerHTML = ICON.star + score;
+    });
+  };
+  const end = () => {
+    const nb = setBest(g.key, `${lvl} 级 ${score}/10`, Object.assign(v => lvl * 100 + score > v, { value: lvl * 100 + score }));
+    box.innerHTML = `<div class="sq-end"><div class="sq-big">${score} / 10</div><p>${nb ? '新纪录！' : ''}${score >= 8 && lvl === 1 ? '可以挑战 2 级了！' : '在脑子里转方块，就是高手“预判”的本领。'}</p>
+      <div class="btnrow"><button type="button" class="btn" id="l1">1 级：转一下</button><button type="button" class="btn ghost" id="l2">2 级：连转两下</button></div></div>`;
+    $('#l1').onclick = () => { lvl = 1; start(); }; $('#l2').onclick = () => { lvl = 2; start(); };
+  };
+  box.innerHTML = `<div class="gstart"><p>选择等级：</p><div class="btnrow"><button type="button" class="btn" id="l1">1 级：转一下</button><button type="button" class="btn ghost" id="l2">2 级：连转两下</button></div></div>`;
+  $('#l1').onclick = () => { lvl = 1; start(); }; $('#l2').onclick = () => { lvl = 2; start(); };
+}
+
+/* ---------- free play ---------- */
+function pagePlay() {
+  const PAD = ["R", "R'", "R2", "L", "L'", "L2", "U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", "M", "M'", "y", "y'", "x", "x'"];
+  main().innerHTML = `
+  <header class="page-head"><p class="eyebrow">练习台</p><h1>自由转一转</h1><p class="lead">点按钮转方块，或用键盘：R L U D F B 键顺时针，加 Shift 是反方向（例如 Shift+R 是 R'）。打乱以后，可以让它一步一步还原给你看。</p></header>
+  <div class="lesson play">
+    <div class="lesson-main">
+      <div class="card">
+        <div class="pad">${PAD.map(m => `<button type="button" class="mv padbtn" data-m="${m}"><b>${m}</b><small>${shortOf(m)}</small></button>`).join('')}</div>
+        <div class="btnrow tools">
+          <button type="button" class="btn" id="pScr">${ICON.shuffle}<span>打乱</span></button>
+          <button type="button" class="btn ghost" id="pSolve">${ICON.play}<span>还原给我看</span></button>
+          <button type="button" class="btn ghost" id="pUndo">${ICON.back}<span>撤销</span></button>
+          <button type="button" class="btn ghost" id="pReset">${ICON.restart}<span>变回还原好</span></button>
+        </div>
+        <p class="muted small" id="pLog">已转：（还没有）</p>
+      </div>
+      <div class="card">
+        <label class="lbl" for="algIn">输入公式，看它怎么转</label>
+        <div class="inrow"><input id="algIn" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="例如：R U R' U'" value="R U R' U R U2 R'"><button type="button" class="btn" id="algGo">${ICON.play}<span>播放</span></button></div>
+        <p class="muted small">可以用：R L U D F B M E S x y z，加 ' 或 2。小写字母（r、f）是两层一起转。</p>
+      </div>
+    </div>
+    <aside class="lesson-side"><div class="dock"><div id="player"></div></div></aside>
+  </div>`;
+  const player = makePlayer($('#player'), {});
+  player.load({ state: Cube.solved(), moves: [], title: '我的魔术方块', sub: '拖动方块可以转着看' });
+  const log = [];
+  const writeLog = () => { $('#pLog').textContent = '已转：' + (log.length ? Cube.simplify(log).slice(-40).join(' ') : '（还没有）'); };
+  let busy = false;
+  const doMove = async m => {
+    if (busy) return; busy = true;
+    if (player.moves.length) { const st = player.view.state; player.load({ state: st, moves: [], title: '我的魔术方块', sub: '' }); }
+    await player.view.turn(m, 200); log.push(m); writeLog(); busy = false;
+    player.start = player.view.state.slice();
+    if (Cube.isSolved(player.view.state) && log.length > 3) toast('还原好了！');
+  };
+  $('.pad').addEventListener('click', e => { const b = e.target.closest('.padbtn'); if (b) doMove(b.dataset.m); });
+  $('#pScr').onclick = async () => {
+    if (busy) return; busy = true;
+    player.load({ state: player.view.state, moves: [], title: '打乱中…', sub: '' });
+    const sc = Cube.randomScramble(20);
+    for (const m of sc) { await player.view.turn(m, 70); log.push(m); }
+    writeLog(); busy = false;
+    player.load({ state: player.view.state, moves: [], title: '已经打乱', sub: '打乱公式：' + sc.join(' ') });
+  };
+  $('#pSolve').onclick = () => {
+    if (busy) return;
+    const st = player.view.state;
+    if (Cube.isSolved(st)) { toast('方块已经是还原好的，先打乱吧！'); return; }
+    const r = Cube.solveBeginner(st);
+    const segs = [];
+    r.parts.forEach((p, i) => annotate(p.moves, STAGE_KEYS[i]).forEach(s => segs.push({ ...s, stage: STAGE_TITLE[i] })));
+    const moves = segs.flatMap(s => s.moves);
+    player.load({ state: st, moves, segs, title: '用 7 个步骤还原', sub: `一共 ${moves.length} 步。可以按播放，也可以一步一步看。`, finishText: '还原好了！' });
+    log.length = 0; writeLog();
+    if (isNarrow()) $('.lesson-side').scrollIntoView({ behavior: 'smooth' });
+  };
+  $('#pUndo').onclick = () => { if (!log.length || busy) return; const m = log.pop(); busy = true; player.view.turn(Cube.invMove(m), 200).then(() => { busy = false; player.start = player.view.state.slice(); writeLog(); }); };
+  $('#pReset').onclick = () => { log.length = 0; writeLog(); player.load({ state: Cube.solved(), moves: [], title: '我的魔术方块', sub: '' }); };
+  $('#algGo').onclick = () => {
+    const ms = Cube.parse($('#algIn').value);
+    if (!ms.length) { toast('没有看懂这个公式，检查一下字母。'); return; }
+    player.load({ state: player.view.state, moves: ms, segs: annotate(ms), title: '我的公式', sub: ms.join(' ') });
+    player.play();
+  };
+  const key = e => {
+    if (e.target.closest('input, textarea')) return;
+    const k = e.key.toUpperCase();
+    if ('RLUDFB'.includes(k) && k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); doMove(k + (e.shiftKey ? "'" : '')); }
+  };
+  document.addEventListener('keydown', key); onCleanup(() => document.removeEventListener('keydown', key));
+}
+
+/* ---------- follow along ---------- */
+const STAGE_TIPS = {
+  daisy: '找白色棱块，送上顶层围着黄色中心，白色朝上。上面已经有花瓣，就先转顶层让开。',
+  cross: '转顶层，让花瓣侧面的颜色对上中心，再把那一面转两下。',
+  corners: '找顶层的白色角块，送到它家的正上方（右前上），重复“上左下右”。',
+  second: '找顶层没有黄色的棱块，连成倒 T，看顶上的颜色往左或往右放。',
+  ycross: '看黄色形状：点、L、一字。L 放左上，一字横着放，做黄十字公式。',
+  yface: '数黄色角块。1 个放左前方；0 或 2 个让左前角的黄色朝左。做小鱼公式。',
+  cperm: '找车灯，放到后面，做车灯公式。四面都有车灯就转顶层对齐。',
+  eperm: '把完成的一面放到后面，做棱块公式。',
+};
+function solutionSpec(st, title) {
+  const r = Cube.solveBeginner(st);
+  const segs = [];
+  r.parts.forEach((p, i) => annotate(p.moves, STAGE_KEYS[i]).forEach(s => segs.push({ ...s, stage: STAGE_TITLE[i], key: STAGE_KEYS[i] })));
+  const moves = segs.flatMap(s => s.moves);
+  return { ok: Cube.isSolved(r.state), spec: { state: st, moves, segs, title, sub: `一共 ${moves.length} 步，分成 7 个步骤。`, finishText: '还原好了！你做到了！' } };
+}
+function pageFollow() {
+  main().innerHTML = `
+  <header class="page-head"><p class="eyebrow">跟我还原</p><h1>拿着你的方块，一步一步跟着做</h1>
+  <p class="lead">两种开始方法：照着打乱公式把还原好的方块打乱；或者把你手上已经乱掉的方块的颜色填进来。</p></header>
+  <div class="tabs" role="tablist"><button type="button" role="tab" class="tab on" data-t="scr">用打乱公式</button><button type="button" role="tab" class="tab" data-t="inp">输入我方块的颜色</button></div>
+  <div id="fwork"></div>`;
+  const work = $('#fwork');
+  $$('.tab').forEach(t => t.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === t)); t.dataset.t === 'scr' ? scrMode() : inpMode(); });
+  let player = null;
+  const showSolution = (st, title) => {
+    const { ok, spec } = solutionSpec(st, title);
+    if (!ok) return false;
+    work.innerHTML = `<div class="lesson follow"><div class="lesson-main"><div class="stagecard card" id="stc"></div>
+      <div class="card"><h3>小提醒</h3><ul class="checks"><li>一直保持黄色朝上、绿色对着你（看到 y 时，整个方块跟着转）。</li><li>用“走一步”按钮，每按一次就跟着转一下。</li><li>转错了？按“退一步”，或者从头开始。</li></ul>
+      <button type="button" class="btn ghost small" id="restartF">${ICON.restart}<span>换一个方块</span></button></div></div>
+      <aside class="lesson-side"><div class="dock"><div id="player"></div></div></aside></div>`;
+    player = makePlayer($('#player'), {});
+    player.speed = 'slow'; player.renderSpeed();
+    player.load(spec);
+    const stc = $('#stc');
+    let lastKey = null;
+    player.onChange = idx => {
+      const seg = player.segAt(Math.min(idx, player.moves.length - 1));
+      const key = idx >= player.moves.length ? 'done' : seg && seg.key;
+      if (key === lastKey) return; lastKey = key;
+      if (key === 'done') { stc.innerHTML = `<p class="eyebrow">完成</p><h2>还原好了！</h2><p>去计时器记录一次时间吧。</p><a class="btn" href="#timer">去计时器</a>`; return; }
+      const si = STAGE_KEYS.indexOf(key);
+      stc.innerHTML = `<p class="eyebrow">现在是</p><h2>${STAGE_TITLE[si]}</h2><p>${STAGE_TIPS[key]}</p><div class="stage-dots">${STAGE_KEYS.map((k, j) => `<i class="${j < si ? 'past' : j === si ? 'now' : ''}" title="${STAGE_TITLE[j]}"></i>`).join('')}</div>`;
+    };
+    player.onChange(0);
+    bindPlayerKeys(player);
+    $('#restartF').onclick = () => { $$('.tab')[0].click(); };
+    return true;
+  };
+  const scrMode = () => {
+    let sc = Cube.randomScramble(20);
+    const draw = () => {
+      const st = Cube.apply(Cube.solved(), sc);
+      work.innerHTML = `<div class="card follow-scr">
+        <ol class="steps"><li>拿一个<b>已经还原好</b>的方块：黄色朝上，绿色对着你。</li><li>照下面的打乱公式，一下一下转（这时候不要转整个方块）。</li><li>转完和右边的图比一比，一样就可以开始了。</li></ol>
+        <div class="scr-wrap"><div>${algChips(sc.join(' '), { big: true })}<div class="btnrow"><button type="button" class="btn ghost small" id="newScr">${ICON.shuffle}<span>换一个打乱</span></button></div></div>
+        <div class="scr-pics">${isoSVG(st, { view: 'both', label: '打乱后的样子' })}</div></div>
+        <button type="button" class="btn" id="startF">${ICON.play}<span>打乱好了，开始教我</span></button></div>`;
+      $('#newScr').onclick = () => { sc = Cube.randomScramble(20); draw(); };
+      $('#startF').onclick = () => showSolution(st, '跟着还原');
+    };
+    draw();
+  };
+  const inpMode = () => {
+    const ORDER = [
+      ['U', '顶面（黄色中心）', '把方块往你这边翻，让黄色面对着你，绿色面在下面。'],
+      ['F', '前面（绿色中心）', '黄色朝上，绿色对着你。'],
+      ['R', '右面（橙色中心）', '黄色朝上，整个方块往左转一下，让橙色对着你。'],
+      ['B', '后面（蓝色中心）', '黄色朝上，再往左转一下，让蓝色对着你。'],
+      ['L', '左面（红色中心）', '黄色朝上，再往左转一下，让红色对着你。'],
+      ['D', '底面（白色中心）', '回到绿色对着你，再把方块往上翻，让白色对着你，绿色在上面。'],
+    ];
+    const st = Store.get('input', null) || Cube.solved().map((c, k) => k % 9 === 4 ? c : '');
+    let fi = 0, brush = 'W';
+    const counts = () => { const n = {}; 'WYRGBO'.split('').forEach(c => n[c] = 0); st.forEach(c => { if (n[c] != null) n[c]++; }); return n; };
+    const draw = () => {
+      const [f, name, how] = ORDER[fi];
+      const base = Cube.FACES.indexOf(f) * 9;
+      const n = counts();
+      work.innerHTML = `<div class="card inp">
+        <div class="inp-steps">${ORDER.map((o, j) => `<button type="button" class="istep${j === fi ? ' on' : ''}" data-j="${j}">${o[1].slice(0, 2)}</button>`).join('')}</div>
+        <div class="inp-body"><div><h3>${name}</h3><p>${how}</p>
+          <div class="paintgrid big">${Array.from({ length: 9 }, (_, i) => { const c = st[base + i]; return `<button type="button" class="pcell${i === 4 ? ' lock' : ''}${c ? ' filled' : ''}" data-i="${i}" style="${c ? 'background:' + HEX[c] : ''}" aria-label="第 ${i + 1} 格${i === 4 ? '（中心，不用改）' : ''}"></button>`; }).join('')}</div></div>
+          <div><p>先选颜色，再点格子：</p><div class="palette">${'WYRGBO'.split('').map(c => `<button type="button" class="pal${c === brush ? ' on' : ''}" data-c="${c}" style="--c:${HEX[c]}">${CN[c]}<small>${n[c]}/9</small></button>`).join('')}</div>
+          <div class="btnrow"><button type="button" class="btn ghost small" id="prevF"${fi ? '' : ' disabled'}>上一面</button>${fi < 5 ? `<button type="button" class="btn small" id="nextF">下一面</button>` : `<button type="button" class="btn small" id="solveF">${ICON.check}<span>检查并开始还原</span></button>`}<button type="button" class="btn ghost small" id="clearF">全部清空</button></div>
+          <div class="fb" id="inMsg" aria-live="polite"></div></div></div>
+        <div class="inp-net">${netSVG(st.map(c => c || 'X'), { label: '你填的颜色展开图' })}<p class="muted small">展开图：中间一排是 左、前、右、后。灰色是还没填的格子。</p></div></div>`;
+      $$('.istep', work).forEach(b => b.onclick = () => { fi = +b.dataset.j; draw(); });
+      $$('.pal', work).forEach(b => b.onclick = () => { brush = b.dataset.c; $$('.pal', work).forEach(x => x.classList.toggle('on', x === b)); });
+      $$('.pcell', work).forEach(b => b.onclick = () => { const i = +b.dataset.i; if (i === 4) return; st[base + i] = brush; Store.set('input', st); draw(); });
+      $('#prevF').onclick = () => { if (fi) { fi--; draw(); } };
+      if ($('#nextF')) $('#nextF').onclick = () => { fi++; draw(); };
+      $('#clearF').onclick = () => { for (let k = 0; k < 54; k++) if (k % 9 !== 4) st[k] = ''; Store.set('input', st); draw(); };
+      if ($('#solveF')) $('#solveF').onclick = () => {
+        const err = validate(st);
+        if (err) { $('#inMsg').innerHTML = `<div class="fb-box no">${ICON.retry}<div><b>再检查一下</b><p>${err}</p></div></div>`; return; }
+        if (!showSolution(st.slice(), '还原你的方块')) $('#inMsg').innerHTML = `<div class="fb-box no">${ICON.retry}<div><b>再检查一下</b><p>这些颜色组合在真的方块上不会出现。可能有两格填反了，或者某一面的方向拿错了。对照每一面的拿法再看一次。</p></div></div>`;
+      };
+    };
+    draw();
+  };
+  scrMode();
+}
+function validate(st) {
+  if (st.some(c => !c || c === 'X')) return '还有格子没有填颜色。每一面都要填满 9 格。';
+  const n = {}; st.forEach(c => n[c] = (n[c] || 0) + 1);
+  for (const c of 'WYRGBO') if (n[c] !== 9) return `${CN[c]}色有 ${n[c] || 0} 格，应该刚好 9 格。`;
+  const OPP = { W: 'Y', Y: 'W', R: 'O', O: 'R', B: 'G', G: 'B' };
+  const S = Cube.solved();
+  const want = new Set(Cube.POS.filter(o => o.slots.length > 1).map(o => o.slots.map(k => S[k]).sort().join('')));
+  const seen = new Set();
+  for (const o of Cube.POS) {
+    if (o.slots.length < 2) continue;
+    const cs = o.slots.map(k => st[k]);
+    for (const a of cs) if (cs.includes(OPP[a])) return `有一块同时有${CN[a]}色和${CN[OPP[a]]}色。它们是对面的颜色，不会在同一块上。`;
+    const key = cs.slice().sort().join('');
+    if (!want.has(key)) return `“${cs.map(c => CN[c]).join('-')}”这一块不存在，可能有一格填错了。`;
+    if (seen.has(key)) return `“${cs.map(c => CN[c]).join('-')}”出现了两次，可能有一格填错了。`;
+    seen.add(key);
+  }
+  return null;
+}
+
+/* ---------- timer ---------- */
+function pageTimer() {
+  main().innerHTML = `
+  <header class="page-head"><p class="eyebrow">计时器</p><h1>记录你的成绩</h1><p class="lead">按住空格键（手机按住下面的大框）到数字变绿，放开就开始计时。还原好了，再按一下停止。</p></header>
+  <div class="timer-grid">
+    <div class="card scr-card"><div class="scr-head"><b>打乱公式</b><button type="button" class="btn ghost small" id="tNew">${ICON.shuffle}<span>换一个</span></button></div>
+      <div id="tScr"></div><p class="muted small">黄色朝上、绿色朝前，照着打乱。</p>
+      <label class="switch"><input type="checkbox" id="tInsp"><span>15 秒观察（比赛规则：可以看，不能转）</span></label></div>
+    <button type="button" class="timer-pad" id="pad" aria-label="计时器：按住再放开开始，再按一下停止"><span class="tp-time" id="tTime">0.00</span><span class="tp-hint" id="tHint">按住空格键或这个框</span></button>
+    <div class="card stats" id="tStats"></div>
+    <div class="card"><div class="scr-head"><b>徽章</b></div><div class="badges" id="tBadges"></div></div>
+    <div class="card"><div class="scr-head"><b>进步曲线</b><span class="muted small">最近 30 次</span></div><div id="tChart" class="chart"></div></div>
+    <div class="card"><div class="scr-head"><b>成绩记录</b><button type="button" class="btn ghost small" id="tClear">清空</button></div><div id="tList" class="tlist"></div></div>
+  </div>`;
+  let times = Store.get('times', []);
+  let scr = Cube.randomScramble(20);
+  $('#tInsp').checked = Store.get('insp', false);
+  $('#tInsp').onchange = e => Store.set('insp', e.target.checked);
+  const drawScr = () => { $('#tScr').innerHTML = `${algChips(scr.join(' '))}<div class="scr-pic">${isoSVG(Cube.apply(Cube.solved(), scr), { label: '打乱后的样子' })}</div>`; };
+  $('#tNew').onclick = () => { scr = Cube.randomScramble(20); drawScr(); };
+  let state = 'idle', t0 = 0, raf, holdT, inspT0 = 0, inspTimer;
+  const pad = $('#pad'), tt = $('#tTime'), th = $('#tHint');
+  const setPad = s => { state = s; pad.dataset.s = s; };
+  const tick = () => { tt.textContent = fmt(performance.now() - t0); raf = requestAnimationFrame(tick); };
+  const startInspect = () => {
+    setPad('inspect'); inspT0 = performance.now(); th.textContent = '观察中！想好白十字怎么做。准备好就按住。';
+    const f = () => { const left = 15 - (performance.now() - inspT0) / 1000; tt.textContent = left > 0 ? Math.ceil(left) : '时间到'; if (state === 'inspect' || state === 'hold-i' || state === 'ready-i') inspTimer = requestAnimationFrame(f); };
+    f();
+  };
+  const press = () => {
+    if (state === 'running') { stop(); return; }
+    if (state === 'idle' || state === 'stopped') {
+      if ($('#tInsp').checked) { startInspect(); state = 'insp-wait'; pad.dataset.s = 'inspect'; return; }
+      setPad('hold'); th.textContent = '继续按住…';
+      holdT = setTimeout(() => { if (state === 'hold') { setPad('ready'); th.textContent = '放开就开始！'; tt.textContent = '0.00'; } }, 300);
+      return;
+    }
+    if (state === 'inspect') {
+      setPad('hold-i');
+      holdT = setTimeout(() => { if (state === 'hold-i') { setPad('ready-i'); th.textContent = '放开就开始！'; } }, 300);
+    }
+  };
+  const release = () => {
+    if (state === 'insp-wait') { state = 'inspect'; return; }
+    if (state === 'hold' || state === 'hold-i') { clearTimeout(holdT); if (state === 'hold') { setPad('idle'); th.textContent = '要按住久一点，数字变绿再放开'; } else { setPad('inspect'); } return; }
+    if (state === 'ready' || state === 'ready-i') { cancelAnimationFrame(inspTimer); setPad('running'); th.textContent = '还原好了就按一下'; t0 = performance.now(); tick(); }
+  };
+  const stop = () => {
+    cancelAnimationFrame(raf);
+    const ms = performance.now() - t0;
+    tt.textContent = fmt(ms); setPad('stopped');
+    const prevBest = times.length ? Math.min(...times.map(x => x.t)) : Infinity;
+    times.push({ t: Math.round(ms), s: scr.join(' '), d: Date.now() }); Store.set('times', times);
+    th.textContent = ms < prevBest && times.length > 1 ? '新纪录！再按一次开始下一轮' : '记录好了。再按住开始下一轮';
+    if (ms < prevBest && times.length > 1) toast('新纪录：' + fmt(ms) + ' 秒！');
+    scr = Cube.randomScramble(20); drawScr(); drawStats();
+  };
+  const kd = e => {
+    if (e.target.closest('input, textarea')) return;
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
+    else if (state === 'running') { e.preventDefault(); stop(); }
+  };
+  const ku = e => { if (e.code === 'Space') { e.preventDefault(); release(); } };
+  document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
+  pad.addEventListener('pointerup', e => { e.preventDefault(); release(); });
+  pad.addEventListener('pointerleave', () => { if (state === 'hold' || state === 'hold-i' || state === 'ready' || state === 'ready-i') release(); });
+  pad.addEventListener('click', e => e.preventDefault());
+  onCleanup(() => { document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); cancelAnimationFrame(raf); cancelAnimationFrame(inspTimer); clearTimeout(holdT); });
+  const avg = n => { if (times.length < n) return null; const a = times.slice(-n).map(x => x.t).sort((x, y) => x - y).slice(1, -1); return a.reduce((p, c) => p + c, 0) / a.length; };
+  const BADGES = [[180, '3 分钟内'], [120, '2 分钟内'], [60, '1 分钟内'], [45, '45 秒内'], [30, '30 秒内'], [20, '20 秒内']];
+  const drawStats = () => {
+    const best = times.length ? Math.min(...times.map(x => x.t)) : null;
+    $('#tStats').innerHTML = [['最好成绩', fmt(best)], ['最近 5 次平均', fmt(avg(5))], ['最近 12 次平均', fmt(avg(12))], ['还原次数', times.length]].map(([a, b]) => `<div class="stat"><small>${a}</small><b>${b}</b></div>`).join('') + `<p class="muted small stat-note">平均会去掉最快和最慢的一次，比较能看出真实水平。</p>`;
+    $('#tBadges').innerHTML = BADGES.map(([s, n]) => `<div class="badge${best != null && best <= s * 1000 ? ' got' : ''}">${ICON.star}<span>${n}</span></div>`).join('');
+    $('#tList').innerHTML = times.length ? times.slice().reverse().slice(0, 50).map((x, j) => { const idx = times.length - 1 - j; return `<div class="trow"><span class="tn">#${idx + 1}</span><b>${fmt(x.t)}</b><span class="ts muted small">${esc(x.s)}</span><button type="button" class="icon-btn small del" data-i="${idx}" aria-label="删除这一次">×</button></div>`; }).join('') : '<p class="muted">还没有成绩。打乱方块，按住空格开始吧！</p>';
+    $$('.del', $('#tList')).forEach(b => b.onclick = () => { times.splice(+b.dataset.i, 1); Store.set('times', times); drawStats(); });
+    drawChart();
+  };
+  let clearArm = false;
+  $('#tClear').onclick = e => {
+    if (!times.length) return;
+    if (!clearArm) { clearArm = true; e.currentTarget.textContent = '确定清空？再按一次'; setTimeout(() => { clearArm = false; const b = $('#tClear'); if (b) b.textContent = '清空'; }, 3000); return; }
+    times = []; Store.set('times', times); clearArm = false; $('#tClear').textContent = '清空'; drawStats();
+  };
+  const drawChart = () => {
+    const box = $('#tChart');
+    const data = times.slice(-30);
+    if (data.length < 2) { box.innerHTML = '<p class="muted">还原两次以上，就会画出你的进步曲线。</p>'; return; }
+    const W = Math.max(300, Math.round(box.clientWidth || 560)), H = 230, L = 50, R = 14, T = 14, B = 26;
+    const maxS = Math.max(...data.map(x => x.t / 1000));
+    const steps = [10, 15, 20, 30, 60, 120, 180, 300, 600];
+    const ymax = steps.find(s => s >= maxS * 1.08) || Math.ceil(maxS / 60) * 60;
+    const tickStep = ymax <= 30 ? 10 : ymax <= 60 ? 15 : ymax <= 120 ? 30 : ymax <= 300 ? 60 : 120;
+    const x = i => L + (data.length === 1 ? 0 : i * (W - L - R) / (data.length - 1));
+    const y = s => T + (1 - s / ymax) * (H - T - B);
+    let g = '';
+    for (let s = 0; s <= ymax + 0.001; s += tickStep) g += `<line x1="${L}" x2="${W - R}" y1="${y(s)}" y2="${y(s)}" class="grid"/><text x="${L - 8}" y="${y(s) + 4}" text-anchor="end" class="axis">${s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + '秒'}</text>`;
+    const labelled = [];
+    [[20, '20 秒'], [30, '30 秒'], [60, '1 分钟']].forEach(([s, n]) => {
+      if (s >= ymax) return;
+      g += `<line x1="${L}" x2="${W - R}" y1="${y(s)}" y2="${y(s)}" class="goal"/>`;
+      if (labelled.every(v => Math.abs(v - y(s)) > 15)) { labelled.push(y(s)); g += `<text x="${L + 6}" y="${y(s) - 5}" class="goal-t">目标 ${n}</text>`; }
+    });
+    const pts = data.map((d, i) => [x(i), y(d.t / 1000)]);
+    g += `<path d="M${pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L')}" class="line"/>`;
+    pts.forEach((p, i) => { g += `<circle cx="${p[0]}" cy="${p[1]}" r="${i === pts.length - 1 ? 5.5 : 4}" class="pt${i === pts.length - 1 ? ' last' : ''}"/>`; });
+    g += `<text x="${L}" y="${H - 6}" class="axis">更早</text><text x="${W - R}" y="${H - 6}" text-anchor="end" class="axis">最新</text>`;
+    g += `<line class="cross" id="cx" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/>`;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="最近 ${data.length} 次成绩的折线图">${g}<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" id="hit"/></svg><div class="tip-pop" id="tp" hidden></div>`;
+    const svg = $('svg', box), tp = $('#tp'), cx = $('#cx');
+    $('#hit').addEventListener('pointermove', e => {
+      const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * W / r.width;
+      const i = Math.max(0, Math.min(data.length - 1, Math.round((px - L) / ((W - L - R) / (data.length - 1)))));
+      cx.setAttribute('x1', pts[i][0]); cx.setAttribute('x2', pts[i][0]); cx.setAttribute('visibility', 'visible');
+      tp.hidden = false; tp.innerHTML = `<b>${fmt(data[i].t)}</b><span>第 ${times.length - data.length + i + 1} 次</span>`;
+      tp.style.left = (pts[i][0] / W * 100) + '%'; tp.style.top = (pts[i][1] / H * r.height) + 'px';
+    });
+    $('#hit').addEventListener('pointerleave', () => { tp.hidden = true; cx.setAttribute('visibility', 'hidden'); });
+  };
+  drawScr(); drawStats();
+}
+
+/* ---------- speed path ---------- */
+const XCASES = {
+  'x-1': { alg: "U R U' R'", t: '角块和棱块分开，往右放', n: '棱块颜色和右面一样时用。' },
+  'x-2': { alg: "U' F' U F", t: '角块和棱块分开，往前放', n: '上一个的镜子版本，用前面。' },
+  'x-3': { alg: "F' U' F", t: '已经配好一对（前面）', n: '角块和棱块已经连在一起，直接放进去。' },
+  'x-4': { alg: "R U R'", t: '已经配好一对（右面）', n: '最短的一个，只要 3 下。' },
+  'x-5': { alg: "R U2 R' U' R U R'", t: '白色朝上（棱块在右）', n: '先把它们分开，再配对放进去。' },
+  'x-6': { alg: "F' U2 F U F' U' F", t: '白色朝上（棱块在前）', n: '上一个的镜子版本。' },
+  'x-7': { alg: "U' R U' R' U R U R'", t: '白色朝右，棱块在顶上', n: '先把角块藏起来，再一起拿出来。' },
+  'x-8': { alg: "R U' R' U R U' R'", t: '角块在下面，棱块在顶上', n: '角块已经在槽里，先拿出来再配对。' },
+};
+Object.entries(XCASES).forEach(([k, v]) => { CASES[k] = { mask: 'f2l', inv: v.alg, title: v.t }; });
+const LL4 = [
+  { g: '顶层第 1 步：黄十字（3 个）', items: [['o-line', A.fruruf, '一字'], ['o-L', A.furuRf, '小拐弯 L'], ['o-dot', A.dot, '点']], mask: 'ollEdges' },
+  { g: '顶层第 2 步：黄色面（7 个）', items: [['o-sune', A.sune, '小鱼'], ['o-anti', A.anti, '反小鱼'], ['o-H', A.H, '双车灯 H'], ['o-pi', A.pi, '侧车灯 π'], ['o-U', A.headl, '车灯 U'], ['o-T', A.T, 'T 字'], ['o-bow', A.bow, '领结']], mask: 'oll' },
+  { g: '顶层第 3 步：角块换位（2 个）', items: [['q-A', A.aperm, '车灯'], ['q-Y', A.yperm, '对角']], mask: 'all', arrows: true },
+  { g: '顶层第 4 步：棱块换位（4 个）', items: [['q-Ua', A.ua, '三棱换位 a'], ['q-Ub', A.ub, '三棱换位 b'], ['q-H', A.hperm, '对换 H'], ['q-Z', A.zperm, '邻换 Z']], mask: 'all', arrows: true },
+];
+LL4.forEach(G => G.items.forEach(([id, alg, name]) => { CASES[id] = { mask: G.mask, inv: alg, title: name, view: 'top' }; }));
+function pageSpeed() {
+  const bars = (title, rows, max) => {
+    const W = 520, rowH = 34, L = 92, H = rows.length * rowH + 30;
+    const x = s => L + s / max * (W - L - 70);
+    let g = '';
+    for (let s = 0; s <= max; s += 10) g += `<line x1="${x(s)}" x2="${x(s)}" y1="4" y2="${H - 22}" class="grid"/><text x="${x(s)}" y="${H - 6}" text-anchor="middle" class="axis">${s}秒</text>`;
+    rows.forEach(([n, s], i) => { const yy = 6 + i * rowH; g += `<text x="${L - 10}" y="${yy + 18}" text-anchor="end" class="axis lab">${n}</text><rect x="${L}" y="${yy + 4}" width="${Math.max(3, x(s) - L)}" height="20" rx="4" class="bar"><title>${n}：约 ${s} 秒</title></rect><text x="${x(s) + 6}" y="${yy + 19}" class="val">${s} 秒</text>`; });
+    return `<figure class="barfig"><figcaption>${title}</figcaption><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">${g}</svg></figure>`;
+  };
+  main().innerHTML = `
+  <div class="lesson">
+    <header class="lesson-head"><p class="eyebrow">学会以后</p><h1>20 秒之路</h1><p class="goal">从“会还原”到“20 秒”，要换更快的方法，也要练眼睛和手指。照着路线一站一站来，不用急。</p></header>
+    <div class="lesson-main prose">
+      <h2>时间都花在哪里？</h2>
+      <p>同样是还原，新手和 20 秒高手的时间分配差很多。下面是大约的数字：</p>
+      <div class="barpair">${bars('新手：大约 2 分钟', [['白十字', 25], ['白色角块', 30], ['第二层', 30], ['顶层 4 步', 35]], 40)}${bars('20 秒高手：大约 20 秒', [['白十字', 3], ['F2L 前两层', 10], ['顶层：黄色面', 3], ['顶层：换位', 4]], 40)}</div>
+      <p>新手最多的时间，其实花在<b>停下来找小块</b>。所以练观察，跟练手指一样重要。</p>
+      <h2>路线图</h2>
+      <ol class="road vertical">${ROAD.map(r => `<li><span class="road-t">${r.t}</span><b>${r.name}</b><small>${r.what}</small></li>`).join('')}</ol>
+      <h2>第 1 站：熟练 + 指法</h2>
+      <p>公式要熟到“手指自己会动”，不用想下一步。拿法：两手的大拇指在前面，其他手指在后面，方块放在指尖，不要握太紧。</p>
+      <div class="finger">
+        ${[['R', '右手手腕往上翻'], ["R'", '右手手腕往下翻'], ['U', '右手食指把顶层往左拨'], ["U'", '左手食指把顶层往右拨'], ['F', '右手大拇指往下推'], ['L', '左手手腕往下翻'], ["L'", '左手手腕往上翻'], ['D', '左手无名指把底层往右拨']].map(([m, t]) => `<div><span class="mv static"><b>${m}</b><small>${shortOf(m)}</small></span><p>${t}</p></div>`).join('')}
+      </div>
+      ${rule('四步舞挑战', '用计时器计时：连做 6 次“上左下右”（方块会变回原样）。目标 6 秒 → 4 秒 → 3 秒以内。转的时候不要换手。')}
+      <h2>第 2 站：直接做底十字</h2>
+      <p>不用小雏菊，直接把白色棱块放到底部。一开始会比较慢，练熟以后平均 8 步以内就能做完。比赛前有 15 秒观察时间，用来把白十字想好。</p>
+      <div class="cross-ch card"><div class="cc-left" id="ccLeft"></div></div>
+      <h2>第 3 站：F2L 入门</h2>
+      <p>新手方法是先放角块、再放棱块。F2L 是把<b>一个角块和一个棱块先配成一对，再一起放进去</b>，第一层和第二层一起完成。下面 8 种最常见，都放到右前方的槽里（白色在底，黄色朝上）。</p>
+      ${tip('怎么看图', '灰色的是顶层的其他小块，不用管。彩色的是要配对的角块和棱块。')}
+      <div class="xcases">${Object.entries(XCASES).map(([id, v]) => `<div class="xcase"><figure class="dg" data-case="${id}"><div class="dg-pic"></div></figure><div><b>${v.t}</b>${algChips(v.alg)}<p class="muted small">${v.n}</p><button type="button" class="btn small demo" data-case="${id}">${ICON.play}<span>看演示</span></button></div></div>`).join('')}</div>
+      <h2>第 4 站：两步顶层（4LLL）</h2>
+      <p>把顶层分成 4 小步：先黄十字、再黄色面、再换角块、最后换棱块。一共 16 个公式。你已经会其中 4 个（黄十字、小鱼、车灯、棱块公式）！每星期学 2～3 个就好。</p>
+      ${LL4.map(G => `<h3>${G.g}</h3><div class="xcases ll">${G.items.map(([id, alg, name]) => `<div class="xcase"><figure class="dg" data-case="${id}"><div class="dg-pic">${topSVG(caseState(id), { alg: G.arrows ? alg : null, labels: false, label: name })}</div></figure><div><b>${name}</b>${algChips(alg)}<button type="button" class="btn small demo" data-case="${id}">${ICON.play}<span>看演示</span></button></div></div>`).join('')}</div>`).join('')}
+      ${tip('看懂箭头', '换位的图里，箭头表示做完公式后，小块会搬到哪里。双箭头是两块互相交换。')}
+      <h2>第 5 站：预判，冲 20 秒</h2>
+      <ul class="checks">
+        <li><b>慢就是快：</b>用比平常慢一点、但<b>不停下来</b>的速度转。停顿比慢转更浪费时间。</li>
+        <li><b>边转边找：</b>做公式的时候，眼睛已经在找下一对小块。</li>
+        <li><b>每天玩观察训练营：</b>图形侦探练认图，预测高手练脑中转方块。</li>
+        <li><b>用好方块：</b>一个顺滑的磁力速拧方块，比旧方块快很多。</li>
+      </ul>
+      <h2>每天 15～20 分钟练习表</h2>
+      <div class="plan">
+        ${[['3 分钟', '暖手', '四步舞 R U R\' U\' 做 6 次 × 3 轮'], ['3 分钟', '观察训练营', '玩 1 个游戏'], ['5 分钟', '专项', '这个星期在学的公式或步骤，慢慢做 10 次'], ['5～8 分钟', '计时还原', '计时还原 5 次，看“最近 5 次平均”']].map(([t, a, b]) => `<div><span class="road-t">${t}</span><b>${a}</b><p>${b}</p></div>`).join('')}
+      </div>
+      <p class="muted">进步不是每天都看得到。每星期比一次“最近 12 次平均”，就会发现自己变快了。</p>
+    </div>
+    <aside class="lesson-side"><div class="dock" id="dock"><div id="player"></div></div></aside>
+  </div>`;
+  const dock = $('#dock');
+  const player = makePlayer($('#player'), {});
+  player.load(caseSpec('x-1'));
+  hydrate($('.lesson-main'), player, dock);
+  bindPlayerKeys(player);
+  // cross challenge
+  const cc = $('#ccLeft');
+  let ccTimer;
+  onCleanup(() => clearInterval(ccTimer));
+  const newCross = () => {
+    clearInterval(ccTimer);
+    const sc = Cube.randomScramble(20);
+    const st = Cube.apply(Cube.solved(), sc);
+    cc.innerHTML = `<div class="scr-head"><b>白十字挑战</b><span class="clock" id="ccClk">15</span></div>
+      <p class="muted small">照打乱公式打乱（黄色朝上、绿色朝前）。用 15 秒观察：4 个白色棱块在哪？先放哪一个？然后自己试，最后看最少步数的答案。</p>
+      ${algChips(sc.join(' '))}
+      <div class="cc-net">${netSVG(st, { label: '打乱后的展开图' })}</div>
+      <div class="btnrow"><button type="button" class="btn small" id="ccAns">${ICON.play}<span>看最少步数答案</span></button><button type="button" class="btn ghost small" id="ccNew">${ICON.shuffle}<span>换一题</span></button></div>`;
+    const t0 = performance.now();
+    ccTimer = setInterval(() => { const c = $('#ccClk'); if (!c) return; const left = 15 - (performance.now() - t0) / 1000; c.textContent = left > 0 ? Math.ceil(left) + ' 秒观察' : '开始做！'; if (left <= 0) clearInterval(ccTimer); }, 200);
+    $('#ccNew').onclick = newCross;
+    $('#ccAns').onclick = () => {
+      const b = $('#ccAns'); b.disabled = true; b.querySelector('span').textContent = '计算中…';
+      setTimeout(() => {
+        const sol = Cube.solveCross(st);
+        player.load({ state: maskCross(st), moves: sol, segs: [{ name: '最少步数白十字', moves: sol }], title: `白十字：${sol.length} 步`, sub: '灰色的小块现在不用管，只看白色棱块。', finishText: `白十字完成，只用了 ${sol.length} 步！` });
+        b.disabled = false; b.querySelector('span').textContent = '看最少步数答案';
+        if (isNarrow()) { cc.parentElement.after(dock); dock.classList.add('inline'); dock.scrollIntoView({ behavior: 'smooth' }); }
+        player.play();
+      }, 30);
+    };
+  };
+  newCross();
+}
+function maskCross(st) {
+  // keep only white edges + centers visible (by current colors)
+  return st.map((c, k) => {
+    const P = Cube.POS.find(o => o.slots.includes(k));
+    if (P.slots.length === 1) return c;
+    const cols = P.slots.map(q => st[q]);
+    return P.slots.length === 2 && cols.includes('W') ? c : 'X';
+  });
+}
+
+/* ---------- cheat cards ---------- */
+function pageCards() {
+  const C = [
+    ['第 1 步', '白十字', 'c-goal', '4 个白色棱块在哪里？', DAISY.split(' ').slice(0, 1).join(' '), '小雏菊 → 对齐颜色 → 转两下', null],
+    ['第 2 步', '白色角块', 'k-goal', '白色朝右 1 次、朝上 3 次、朝前 5 次', A.sexy, '上 · 左 · 下 · 右', 'learn-3'],
+    ['第 3 步', '第二层', 's-goal', '顶层没有黄色的棱块；连成倒 T', A.right, '往右：推走 抬起 回来 放下 ×2', 'learn-4'],
+    ['第 4 步', '黄十字', 'y-goal', '点 → L（放左上）→ 一字（横放）→ 十字', A.fruruf, '前顺 ｜ 上 左 下 右 ｜ 前逆', 'learn-5'],
+    ['第 5 步', '黄色面', 'f-goal', '1 个放左前；0 或 2 个让左前角黄色朝左', A.sune, '上左 · 下左 · 上左左 · 下', 'learn-6'],
+    ['第 6 步', '顶层角块', 'p-back', '找车灯，放后面', A.aperm, "R' F R' ｜ B2 ｜ R F' R' ｜ B2 R2", 'learn-7'],
+    ['第 7 步', '顶层棱块', 'e-back', '完成的一面放后面', A.ua, '上右 · 上左 · 上左 · 上右 · 下右 · 上上', 'learn-8'],
+  ];
+  main().innerHTML = `
+  <header class="page-head"><p class="eyebrow">口诀卡</p><h1>7 步口诀，一页记住</h1><p class="lead">每一步：先<b>看</b>什么，再<b>做</b>什么。忘了的时候来这里看一眼，点卡片可以回到那一关。</p></header>
+  <div class="cards">${C.map(([k, t, id, look, alg, chant, link]) => `
+    <a class="ccard" href="#${link || 'learn-2'}"><div class="ccard-top"><span class="eyebrow">${k}</span><b>${t}</b></div>
+      <div class="ccard-pic">${caseFig(id)}</div>
+      <div class="ccard-row"><span class="ccard-lab">${ICON.eye}看</span><span>${look}</span></div>
+      <div class="ccard-row"><span class="ccard-lab">${ICON.hand}做</span>${k === '第 1 步' ? '<span>花瓣对齐颜色后，那一面转两下（例如 F2）</span>' : algChips(alg)}</div>
+      <div class="chant"><span>念法</span><b>${chant}</b></div></a>`).join('')}</div>
+  <section class="prose narrow"><h2>口诀小字典</h2>
+  <div class="mnemo">${[['R', "R'"], ['U', "U'"], ['F', "F'"], ['L', "L'"], ['D', "D'"], ['y', "y'"]].map(([a, b]) => `<div><span class="mv static"><b>${a}</b><small>${shortOf(a)}</small></span><span class="mv static"><b>${b}</b><small>${shortOf(b)}</small></span></div>`).join('')}</div>
+  <p class="muted">念法里只用右手和顶层的时候：R 念“上”，R' 念“下”，U 念“左”，U' 念“右”，R2 念“上上”，U2 念“左左”。</p></section>`;
+}
+
+/* ---------- router ---------- */
+const PAGES = { home: pageHome, camp: pageCamp, play: pagePlay, follow: pageFollow, timer: pageTimer, speed: pageSpeed, cards: pageCards, 'game-colors': pageGameColors, 'game-flash': pageGameFlash, 'game-find': pageGameFind, 'game-shape': pageGameShape, 'game-predict': pageGamePredict };
+function route() {
+  App.cleanup.forEach(f => { try { f(); } catch (e) { } });
+  App.cleanup = []; App.players = [];
+  const key = (location.hash || '#home').slice(1);
+  try {
+    if (LESSON_BY_KEY[key]) pageLesson(LESSON_BY_KEY[key]);
+    else (PAGES[key] || pageHome)();
+  } catch (err) {
+    main().innerHTML = `<div class="card"><h2>这一页出了点问题</h2><p>${esc(err.message)}</p><a class="btn" href="#home">回到首页</a></div>`;
+    console.error(err);
+  }
+  const navKey = LESSON_BY_KEY[key] ? 'home' : key.startsWith('game-') ? 'camp' : (PAGES[key] ? key : 'home');
+  $$('.nav a').forEach(a => { const on = a.getAttribute('href') === '#' + navKey; a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
+  const navOn = $('.nav a.on'); if (navOn && navOn.scrollIntoView) { const nav = $('.nav'); nav.scrollLeft = navOn.offsetLeft - 20; }
+  window.scrollTo(0, 0);
+}
+function boot() {
+  $('.nav').innerHTML = NAV.map(([k, n]) => `<a href="#${k}">${n}</a>`).join('');
+  window.addEventListener('hashchange', route);
+  route();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+</script>
+</body>
+</html>
